@@ -466,77 +466,50 @@
     const BLUE = "#0A5BE7";
     const PURPLE = "#7045D8";
 
-    const data = {
-      groups: [
-        ["Тормозная система", "🛞"],
-        ["Подвеска", "🛠️"],
-        ["Рулевое управление", "⭕"],
-        ["Двигатель", "⚙️"],
-        ["Система охлаждения", "🌡️"],
-        ["Топливная система", "⛽"],
-        ["Электрика", "⚡"],
-        ["Кузов", "🚘"],
-        ["Освещение", "🔦"]
-      ],
-
-      parts: {
-        "Тормозная система": [
-          ["Тормозной диск", "🛞"],
-          ["Тормозные колодки", "▰"],
-          ["Тормозной суппорт", "🔩"],
-          ["Тормозной шланг", "◯"],
-          ["Главный тормозной цилиндр", "🔧"],
-          ["Вакуумный усилитель тормозов", "⚙️"],
-          ["Датчик ABS", "🅰️"],
-          ["Тормозная жидкость", "🧴"]
-        ]
-      },
-
-      positions: {
-        "Тормозной диск": [
-          ["Передний левый", "🚙"],
-          ["Передний правый", "🚙"],
-          ["Задний левый", "🚙"],
-          ["Задний правый", "🚙"],
-          ["Оба задних", "🚙"],
-          ["Оба передних", "🚙"],
-          ["Оба левых", "🚙"],
-          ["Оба правых", "🚙"],
-          ["Все", "🚙"]
-        ]
-      },
-
-      serviceCategories: [
-        ["Диагностика", ""],
-        ["ТО", ""],
-        ["Тормозная система", ""],
-        ["Подвеска", ""],
-        ["Двигатель", ""],
-        ["Рулевое управление", ""]
-      ],
-
-      services: {
-        "Подвеска": [
-          ["Замена амортизатора", ""],
-          ["Замена стойки амортизатора", ""],
-          ["Замена пружины", ""],
-          ["Замена рычага подвески", ""],
-          ["Развал-схождение", ""],
-          ["Ремонт подвески", ""]
-        ]
-      },
-
-      servicePositions: {
-        "Замена амортизатора": [
-          ["Передний левый", ""],
-          ["Передний правый", ""],
-          ["Задний левый", ""],
-          ["Задний правый", ""]
-        ]
-      }
-    };
+    let data = null;
 
     const app = document.getElementById("app");
+
+    async function loadData() {
+      app.innerHTML = `
+        <section class="screen">
+          <div class="content" style="display:grid;place-items:center;text-align:center;padding-top:120px;">
+            <div>
+              <div style="font-size:34px;margin-bottom:14px;">🚗</div>
+              <strong>Загружаем справочник…</strong>
+            </div>
+          </div>
+        </section>
+      `;
+
+      try {
+        const response = await fetch("./data.json", { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error(`Не удалось загрузить data.json: ${response.status}`);
+        }
+
+        data = await response.json();
+        render();
+      } catch (error) {
+        console.error(error);
+
+        app.innerHTML = `
+          <section class="screen">
+            <div class="content" style="display:grid;place-items:center;text-align:center;padding:100px 28px;">
+              <div>
+                <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+                <h1 style="font-size:21px;margin:0 0 10px;">Не удалось загрузить справочник</h1>
+                <p style="color:#7D8798;line-height:1.5;margin:0;">
+                  Проверьте, что файл <strong>data.json</strong> находится рядом с
+                  <strong>index.html</strong>.
+                </p>
+              </div>
+            </div>
+          </section>
+        `;
+      }
+    }
 
     const state = {
       screen: "type",
@@ -947,7 +920,7 @@
         .replaceAll(">", "&gt;");
     }
 
-    render();
+    loadData();
   </script>
 </body>
 </html>
