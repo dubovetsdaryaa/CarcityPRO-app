@@ -269,9 +269,22 @@
       line-height: 1;
     }
 
+    .row-copy {
+      min-width: 0;
+    }
+
     .row-title {
+      display: block;
       font-size: 15px;
       font-weight: 650;
+      line-height: 1.25;
+    }
+
+    .row-subtitle {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
       line-height: 1.25;
     }
 
@@ -578,10 +591,55 @@
       return `
         <button class="row ${selected ? "selected" : ""}" data-value="${escapeAttr(title)}">
           <span class="row-icon">${icon || ""}</span>
-          <span class="row-title">${title}</span>
+          <span class="row-copy">
+            <span class="row-title">${title}</span>
+          </span>
           <span class="chevron">›</span>
         </button>
       `;
+    }
+
+    function globalSearchRow({ title, icon, group, kind }) {
+      return `
+        <button
+          class="row"
+          data-value="${escapeAttr(title)}"
+          data-kind="${escapeAttr(kind)}"
+          data-group="${escapeAttr(group || "")}"
+        >
+          <span class="row-icon">${icon || ""}</span>
+          <span class="row-copy">
+            <span class="row-title">${title}</span>
+            ${group ? `<span class="row-subtitle">${group}</span>` : ""}
+          </span>
+          <span class="chevron">›</span>
+        </button>
+      `;
+    }
+
+    function normalizeSearch(value) {
+      return String(value)
+        .toLocaleLowerCase("ru")
+        .replaceAll("ё", "е")
+        .trim();
+    }
+
+    function partSearchResults(query) {
+      const normalizedQuery = normalizeSearch(query);
+      const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+      const results = [];
+
+      for (const [group, items] of Object.entries(data.parts || {})) {
+        for (const [title, icon] of items) {
+          const haystack = normalizeSearch(`${title} ${group}`);
+
+          if (tokens.every(token => haystack.includes(token))) {
+            results.push({ title, icon, group, kind: "part" });
+          }
+        }
+      }
+
+      return results.slice(0, 60);
     }
 
     function renderSearchList({ title, placeholder, items, selectedValue, screenClass = "" }) {
@@ -641,7 +699,7 @@
       setAccent(BLUE);
       return renderSearchList({
         title: "Выберите группу",
-        placeholder: "Поиск по группам",
+        placeholder: "Поиск детали или группы",
         items: data.groups,
         selectedValue: state.group
       });
@@ -703,9 +761,9 @@
 
     function currentSummary() {
       if (state.mode === "parts") {
-        return ["Автозапчасть", state.group, state.item, state.position];
+        return ["Автозапчасть", state.group, state.item, state.position].filter(Boolean);
       }
-      return ["Услуга СТО", state.group, state.item, state.position];
+      return ["Услуга СТО", state.group, state.item, state.position].filter(Boolean);
     }
 
     function renderSuccess() {
@@ -746,7 +804,7 @@
             ? `<div class="act-list">
                 ${state.added.map((item, index) => `
                   <div class="act-card">
-                    <strong>${index + 1}. ${item.position}</strong>
+                    <strong>${index + 1}. ${item.position || item.item}</strong>
                     <span>${item.mode === "parts" ? "Автозапчасть" : "Услуга СТО"} → ${item.group} → ${item.item}</span>
                   </div>
                 `).join("")}
@@ -808,64 +866,133 @@
         });
       });
 
-      document.querySelectorAll(".row[data-value]").forEach(el => {
-        el.addEventListener("click", () => {
-          const value = el.dataset.value;
-          haptic();
+      function bindRowClicks() {
+        document.querySelectorAll(".row[data-value]").forEach(el => {
+          if (el.dataset.bound === "true") return;
+          el.dataset.bound = "true";
 
-          switch (state.screen) {
-            case "group":
-              state.group = value;
-              go("part");
-              break;
+          el.addEventListener("click", () => {
+            const value = el.dataset.value;
+            const kind = el.dataset.kind;
+            haptic();
 
-            case "part":
-              state.item = value;
-              if ((data.positions[value] || []).length) {
-                go("position");
-              }
-              break;
+            switch (state.screen) {
+              case "group":
+                if (kind === "part") {
+                  state.group = el.dataset.group;
+                  state.item = value;
+                  state.position = null;
 
-            case "position":
-              state.position = value;
-              addCurrent();
-              go("success");
-              break;
+                  if ((data.positions[value] || []).length) {
+                    go("position");
+                  } else {
+                    addCurrent();
+                    go("success");
+                  }
+                } else {
+                  state.group = value;
+                  go("part");
+                }
+                break;
 
-            case "serviceCategory":
-              state.group = value;
-              if ((data.services[value] || []).length) {
-                go("service");
-              }
-              break;
+              case "part":
+                state.item = value;
+                state.position = null;
 
-            case "service":
-              state.item = value;
-              if ((data.servicePositions[value] || []).length) {
-                go("servicePosition");
-              }
-              break;
+                if ((data.positions[value] || []).length) {
+                  go("position");
+                } else {
+                  addCurrent();
+                  go("success");
+                }
+                break;
 
-            case "servicePosition":
-              state.position = value;
-              addCurrent();
-              go("success");
-              break;
-          }
+              case "position":
+                state.position = value;
+                addCurrent();
+                go("success");
+                break;
+
+              case "serviceCategory":
+                state.group = value;
+                if ((data.services[value] || []).length) {
+                  go("service");
+                }
+                break;
+
+              case "service":
+                state.item = value;
+                state.position = null;
+
+                if ((data.servicePositions[value] || []).length) {
+                  go("servicePosition");
+                } else {
+                  addCurrent();
+                  go("success");
+                }
+                break;
+
+              case "servicePosition":
+                state.position = value;
+                addCurrent();
+                go("success");
+                break;
+            }
+          });
         });
-      });
+      }
+
+      bindRowClicks();
 
       const input = document.getElementById("searchInput");
       const list = document.getElementById("listContainer");
 
       if (input && list) {
         input.addEventListener("input", () => {
-          const query = input.value.trim().toLocaleLowerCase("ru");
+          const rawQuery = input.value.trim();
+
+          if (state.screen === "group" && rawQuery) {
+            const groupQuery = normalizeSearch(rawQuery);
+            const groupTokens = groupQuery.split(/\s+/).filter(Boolean);
+
+            const matchingGroups = (data.groups || [])
+              .filter(([title]) => {
+                const text = normalizeSearch(title);
+                return groupTokens.every(token => text.includes(token));
+              })
+              .map(([title, icon]) => ({
+                title,
+                icon,
+                group: "",
+                kind: "group"
+              }));
+
+            const matchingParts = partSearchResults(rawQuery);
+            const results = [...matchingGroups, ...matchingParts];
+
+            list.innerHTML = results.length
+              ? results.map(globalSearchRow).join("")
+              : `<div class="empty">Ничего не найдено</div>`;
+
+            bindRowClicks();
+            return;
+          }
+
+          if (state.screen === "group" && !rawQuery) {
+            list.innerHTML = (data.groups || [])
+              .map(item => row(item, item[0] === state.group))
+              .join("");
+
+            bindRowClicks();
+            return;
+          }
+
+          const query = normalizeSearch(rawQuery);
           const rows = [...list.querySelectorAll(".row")];
           let visible = 0;
 
           rows.forEach(rowEl => {
-            const text = rowEl.dataset.value.toLocaleLowerCase("ru");
+            const text = normalizeSearch(rowEl.dataset.value);
             const show = text.includes(query);
             rowEl.style.display = show ? "grid" : "none";
             if (show) visible += 1;
