@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
   <title>CarcityPRO</title>
-  <!-- CarcityPRO build: pdf-to-telegram-v1 -->
+  <!-- CarcityPRO build: act-fields-v1 -->
 
   <style>
     :root {
@@ -426,6 +426,57 @@
       font-size: 14px;
     }
 
+    .act-form {
+      padding: 0 16px 26px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .act-form-title {
+      margin: 0 0 2px;
+      font-size: 18px;
+      font-weight: 760;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 650;
+      color: #46505F;
+    }
+
+    .field-input {
+      width: 100%;
+      height: 50px;
+      border: 1px solid #CDD5E1;
+      border-radius: 10px;
+      outline: none;
+      padding: 0 14px;
+      background: #FFFFFF;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .field-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(0, 124, 90, .12);
+    }
+
+    .field-input::placeholder {
+      color: #98A2B3;
+    }
+
+    .field-hint {
+      margin-top: -2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
     .act-list {
       padding: 0 16px 24px;
       display: grid;
@@ -547,6 +598,20 @@
       }
     }
 
+    function loadSavedValue(key) {
+      try {
+        return localStorage.getItem(key) || "";
+      } catch (_) {
+        return "";
+      }
+    }
+
+    function saveValue(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (_) {}
+    }
+
     const state = {
       screen: "type",
       history: [],
@@ -554,7 +619,12 @@
       group: null,
       item: null,
       position: null,
-      added: []
+      added: [],
+      actInfo: {
+        sto: loadSavedValue("carcitypro_sto"),
+        master: loadSavedValue("carcitypro_master"),
+        car: ""
+      }
     };
 
     function haptic(type = "light") {
@@ -818,7 +888,55 @@
       return `
         <section class="screen">
           ${topbar("Акт дефектовки")}
+
           <div class="act-header">
+            <h1>Данные акта</h1>
+          </div>
+
+          <div class="act-form">
+            <label class="field">
+              <span class="field-label">СТО</span>
+              <input
+                class="field-input"
+                id="stoInput"
+                type="text"
+                maxlength="150"
+                autocomplete="organization"
+                placeholder="Например: CarCity Service"
+                value="${escapeAttr(state.actInfo.sto)}"
+              >
+              <span class="field-hint">Название сохранится для следующих актов.</span>
+            </label>
+
+            <label class="field">
+              <span class="field-label">Мастер</span>
+              <input
+                class="field-input"
+                id="masterInput"
+                type="text"
+                maxlength="150"
+                autocomplete="name"
+                placeholder="Например: Алексей"
+                value="${escapeAttr(state.actInfo.master)}"
+              >
+              <span class="field-hint">Имя мастера тоже сохранится.</span>
+            </label>
+
+            <label class="field">
+              <span class="field-label">Автомобиль</span>
+              <input
+                class="field-input"
+                id="carInput"
+                type="text"
+                maxlength="200"
+                autocomplete="off"
+                placeholder="Например: Toyota Camry 70, 2021"
+                value="${escapeAttr(state.actInfo.car)}"
+              >
+            </label>
+          </div>
+
+          <div class="act-header" style="padding-top:0;">
             <h1>Добавленные позиции</h1>
           </div>
 
@@ -928,6 +1046,9 @@
           },
           body: JSON.stringify({
             init_data: tg.initData,
+            sto: state.actInfo.sto.trim(),
+            master: state.actInfo.master.trim(),
+            car: state.actInfo.car.trim(),
             items: state.added
           })
         });
@@ -1159,6 +1280,30 @@
         });
       });
 
+
+      const stoInput = document.getElementById("stoInput");
+      const masterInput = document.getElementById("masterInput");
+      const carInput = document.getElementById("carInput");
+
+      if (stoInput) {
+        stoInput.addEventListener("input", () => {
+          state.actInfo.sto = stoInput.value;
+          saveValue("carcitypro_sto", stoInput.value);
+        });
+      }
+
+      if (masterInput) {
+        masterInput.addEventListener("input", () => {
+          state.actInfo.master = masterInput.value;
+          saveValue("carcitypro_master", masterInput.value);
+        });
+      }
+
+      if (carInput) {
+        carInput.addEventListener("input", () => {
+          state.actInfo.car = carInput.value;
+        });
+      }
 
       document.querySelectorAll('[data-action="generate-pdf"]').forEach(el => {
         el.addEventListener("click", () => {
