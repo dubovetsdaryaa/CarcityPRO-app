@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="light">
   <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
   <title>CarcityPRO</title>
+  <!-- CarcityPRO build: no-position-fix-v2 -->
 
   <style>
     :root {
@@ -836,6 +837,22 @@
       bindEvents();
     }
 
+    function hasPartPositions(itemName) {
+      return Array.isArray(data.positions?.[itemName])
+        && data.positions[itemName].length > 0;
+    }
+
+    function hasServicePositions(itemName) {
+      return Array.isArray(data.servicePositions?.[itemName])
+        && data.servicePositions[itemName].length > 0;
+    }
+
+    function completeSelectionWithoutPosition() {
+      state.position = null;
+      addCurrent();
+      go("success");
+    }
+
     function bindEvents() {
       document.querySelectorAll('[data-action="back"]').forEach(el => {
         el.addEventListener("click", () => {
@@ -883,11 +900,10 @@
                   state.item = value;
                   state.position = null;
 
-                  if ((data.positions[value] || []).length) {
+                  if (hasPartPositions(value)) {
                     go("position");
                   } else {
-                    addCurrent();
-                    go("success");
+                    completeSelectionWithoutPosition();
                   }
                 } else {
                   state.group = value;
@@ -899,11 +915,10 @@
                 state.item = value;
                 state.position = null;
 
-                if ((data.positions[value] || []).length) {
+                if (hasPartPositions(value)) {
                   go("position");
                 } else {
-                  addCurrent();
-                  go("success");
+                  completeSelectionWithoutPosition();
                 }
                 break;
 
@@ -924,11 +939,10 @@
                 state.item = value;
                 state.position = null;
 
-                if ((data.servicePositions[value] || []).length) {
+                if (hasServicePositions(value)) {
                   go("servicePosition");
                 } else {
-                  addCurrent();
-                  go("success");
+                  completeSelectionWithoutPosition();
                 }
                 break;
 
