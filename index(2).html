@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
+  <title>CarcityPRO</title>
+
+  <style>
+    :root {
+      --blue: #0A5BE7;
+      --blue-soft: #F1F6FF;
+      --purple: #7045D8;
+      --purple-soft: #F7F3FF;
+      --green: #27AE60;
+      --text: #101318;
+      --muted: #7D8798;
+      --line: #E7EBF1;
+      --card: #FFFFFF;
+      --page: #FFFFFF;
+      --result: #F5F7FA;
+      --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 12px rgba(16, 24, 40, 0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--page);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      animation: screenIn .18s ease;
+    }
+
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateX(7px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      min-height: 58px;
+      padding: max(9px, env(safe-area-inset-top)) 16px 8px;
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-title {
+      text-align: center;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .back {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      background: transparent;
+      color: var(--accent, var(--blue));
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 31px;
+      line-height: 1;
+      font-weight: 300;
+      padding: 0 0 3px;
+    }
+
+    .spacer {
+      width: 44px;
+      height: 44px;
+    }
+
+    .content {
+      flex: 1;
+      padding: 12px 16px 22px;
+    }
+
+    .intro-content {
+      padding-top: 42px;
+    }
+
+    .intro-title {
+      margin: 0;
+      text-align: center;
+      font-size: 22px;
+      line-height: 1.22;
+      font-weight: 760;
+    }
+
+    .intro-subtitle {
+      margin: 10px 0 34px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .type-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .type-card {
+      width: 100%;
+      min-height: 116px;
+      border: 1px solid #DDE3EC;
+      border-radius: 14px;
+      background: #fff;
+      padding: 18px 16px;
+      display: grid;
+      grid-template-columns: 52px 1fr 24px;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .type-card.selected.parts {
+      border-color: #7FAAFF;
+      background: var(--blue-soft);
+    }
+
+    .type-card.selected.service {
+      border-color: #AE91F2;
+      background: var(--purple-soft);
+    }
+
+    .type-icon {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      font-size: 33px;
+      line-height: 1;
+    }
+
+    .type-title {
+      display: block;
+      font-size: 17px;
+      font-weight: 730;
+      margin-bottom: 8px;
+    }
+
+    .type-desc {
+      display: block;
+      max-width: 220px;
+      color: #555F70;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .chevron {
+      color: var(--accent, var(--blue));
+      font-size: 25px;
+      font-weight: 300;
+      text-align: right;
+    }
+
+    .search-wrap {
+      position: relative;
+      margin: 2px 0 12px;
+    }
+
+    .search {
+      width: 100%;
+      height: 44px;
+      border: 1px solid #CDD5E1;
+      border-radius: 9px;
+      outline: none;
+      padding: 0 42px 0 14px;
+      color: var(--text);
+      background: #fff;
+      font-size: 15px;
+    }
+
+    .search:focus {
+      border-color: var(--accent, var(--blue));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--blue)) 12%, transparent);
+    }
+
+    .search::placeholder {
+      color: #98A2B3;
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #7A8799;
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    .list {
+      border-top: 1px solid var(--line);
+    }
+
+    .row {
+      width: 100%;
+      min-height: 57px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      padding: 7px 8px 7px 10px;
+      display: grid;
+      grid-template-columns: 38px 1fr 22px;
+      gap: 9px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 0;
+    }
+
+    .row.selected {
+      margin: 3px 0;
+      border: 1.5px solid var(--accent, var(--blue));
+      border-radius: 9px;
+      background: color-mix(in srgb, var(--accent, var(--blue)) 6%, white);
+    }
+
+    .row-icon {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      font-size: 21px;
+      line-height: 1;
+    }
+
+    .row-title {
+      font-size: 15px;
+      font-weight: 650;
+      line-height: 1.25;
+    }
+
+    .row .chevron {
+      color: #7B8798;
+      font-size: 22px;
+    }
+
+    .row.selected .chevron {
+      color: var(--accent, var(--blue));
+    }
+
+    .empty {
+      padding: 30px 10px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .bottom-link {
+      margin-top: auto;
+      border-top: 1px solid var(--line);
+      padding: 16px 16px max(17px, env(safe-area-inset-bottom));
+      background: #fff;
+    }
+
+    .cancel {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--accent, var(--blue));
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .success-content {
+      padding: 62px 16px 24px;
+    }
+
+    .success-mark {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: var(--green);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      font-weight: 800;
+    }
+
+    .success-title {
+      margin: 0 0 32px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 760;
+    }
+
+    .summary-card {
+      border-radius: 14px;
+      background: var(--result);
+      padding: 18px 16px;
+      margin-bottom: 22px;
+    }
+
+    .summary-line {
+      margin: 0 0 18px;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .summary-line:last-child {
+      margin-bottom: 0;
+      font-weight: 760;
+      font-size: 17px;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .primary, .secondary {
+      width: 100%;
+      min-height: 50px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 680;
+      cursor: pointer;
+    }
+
+    .primary {
+      border: 1px solid var(--accent, var(--blue));
+      background: var(--accent, var(--blue));
+      color: #fff;
+    }
+
+    .secondary {
+      border: 1.5px solid var(--accent, var(--blue));
+      background: #fff;
+      color: var(--accent, var(--blue));
+    }
+
+    .act-header {
+      padding: 42px 16px 18px;
+      text-align: center;
+    }
+
+    .act-header h1 {
+      margin: 0 0 8px;
+      font-size: 23px;
+    }
+
+    .act-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .act-list {
+      padding: 0 16px 24px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .act-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .act-card strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 16px;
+    }
+
+    .act-card span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .act-placeholder {
+      margin: 12px 16px 24px;
+      padding: 18px;
+      border-radius: 12px;
+      background: #F8FAFC;
+      color: #586275;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    @media (min-width: 540px) {
+      body {
+        background: #EEF2F7;
+        padding: 24px 0;
+      }
+
+      .app {
+        min-height: calc(100vh - 48px);
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 16px 50px rgba(16, 24, 40, .12);
+      }
+
+      .screen {
+        min-height: calc(100vh - 48px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app" id="app"></main>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      tg.setHeaderColor?.("#FFFFFF");
+      tg.setBackgroundColor?.("#FFFFFF");
+    }
+
+    const BLUE = "#0A5BE7";
+    const PURPLE = "#7045D8";
+
+    const data = {
+      groups: [
+        ["Тормозная система", "🛞"],
+        ["Подвеска", "🛠️"],
+        ["Рулевое управление", "⭕"],
+        ["Двигатель", "⚙️"],
+        ["Система охлаждения", "🌡️"],
+        ["Топливная система", "⛽"],
+        ["Электрика", "⚡"],
+        ["Кузов", "🚘"],
+        ["Освещение", "🔦"]
+      ],
+
+      parts: {
+        "Тормозная система": [
+          ["Тормозной диск", "🛞"],
+          ["Тормозные колодки", "▰"],
+          ["Тормозной суппорт", "🔩"],
+          ["Тормозной шланг", "◯"],
+          ["Главный тормозной цилиндр", "🔧"],
+          ["Вакуумный усилитель тормозов", "⚙️"],
+          ["Датчик ABS", "🅰️"],
+          ["Тормозная жидкость", "🧴"]
+        ]
+      },
+
+      positions: {
+        "Тормозной диск": [
+          ["Передний", "🚙"],
+          ["Задний", "🚙"],
+          ["Передний левый", "🚙"],
+          ["Передний правый", "🚙"],
+          ["Задний левый", "🚙"],
+          ["Задний правый", "🚙"]
+        ]
+      },
+
+      serviceCategories: [
+        ["Диагностика", ""],
+        ["ТО", ""],
+        ["Тормозная система", ""],
+        ["Подвеска", ""],
+        ["Двигатель", ""],
+        ["Рулевое управление", ""]
+      ],
+
+      services: {
+        "Подвеска": [
+          ["Замена амортизатора", ""],
+          ["Замена стойки амортизатора", ""],
+          ["Замена пружины", ""],
+          ["Замена рычага подвески", ""],
+          ["Развал-схождение", ""],
+          ["Ремонт подвески", ""]
+        ]
+      },
+
+      servicePositions: {
+        "Замена амортизатора": [
+          ["Передний левый", ""],
+          ["Передний правый", ""],
+          ["Задний левый", ""],
+          ["Задний правый", ""]
+        ]
+      }
+    };
+
+    const app = document.getElementById("app");
+
+    const state = {
+      screen: "type",
+      history: [],
+      mode: null,
+      group: null,
+      item: null,
+      position: null,
+      added: []
+    };
+
+    function haptic(type = "light") {
+      try {
+        tg?.HapticFeedback?.impactOccurred(type);
+      } catch (_) {}
+    }
+
+    function setAccent(color) {
+      document.documentElement.style.setProperty("--accent", color);
+    }
+
+    function go(screen) {
+      state.history.push(state.screen);
+      state.screen = screen;
+      render();
+      window.scrollTo(0, 0);
+    }
+
+    function back() {
+      const previous = state.history.pop();
+      state.screen = previous || "type";
+      render();
+      window.scrollTo(0, 0);
+    }
+
+    function resetFlow() {
+      state.screen = "type";
+      state.history = [];
+      state.mode = null;
+      state.group = null;
+      state.item = null;
+      state.position = null;
+      render();
+    }
+
+    function topbar(title, showBack = true) {
+      return `
+        <header class="topbar">
+          ${showBack ? `<button class="back" data-action="back" aria-label="Назад">‹</button>` : `<div class="spacer"></div>`}
+          <div class="topbar-title">${title}</div>
+          <div class="spacer"></div>
+        </header>
+      `;
+    }
+
+    function cancelBar() {
+      return `
+        <footer class="bottom-link">
+          <button class="cancel" data-action="cancel">Отмена</button>
+        </footer>
+      `;
+    }
+
+    function row(item, selected = false) {
+      const [title, icon] = item;
+      return `
+        <button class="row ${selected ? "selected" : ""}" data-value="${escapeAttr(title)}">
+          <span class="row-icon">${icon || ""}</span>
+          <span class="row-title">${title}</span>
+          <span class="chevron">›</span>
+        </button>
+      `;
+    }
+
+    function renderSearchList({ title, placeholder, items, selectedValue, screenClass = "" }) {
+      return `
+        <section class="screen ${screenClass}">
+          ${topbar(title)}
+          <div class="content">
+            <div class="search-wrap">
+              <input class="search" id="searchInput" type="search" autocomplete="off" placeholder="${placeholder}">
+              <span class="search-icon">⌕</span>
+            </div>
+            <div class="list" id="listContainer">
+              ${items.map(item => row(item, item[0] === selectedValue)).join("")}
+            </div>
+          </div>
+          ${cancelBar()}
+        </section>
+      `;
+    }
+
+    function renderType() {
+      setAccent(BLUE);
+
+      return `
+        <section class="screen">
+          ${topbar("", false)}
+          <div class="content intro-content">
+            <h1 class="intro-title">Что нужно добавить?</h1>
+            <p class="intro-subtitle">Выберите тип позиции</p>
+
+            <div class="type-list">
+              <button class="type-card parts" data-mode="parts">
+                <span class="type-icon">⚙️</span>
+                <span>
+                  <span class="type-title">Автозапчасть</span>
+                  <span class="type-desc">Запчасти и комплектующие<br>для автомобиля</span>
+                </span>
+                <span class="chevron">›</span>
+              </button>
+
+              <button class="type-card service" data-mode="service">
+                <span class="type-icon">🛠️</span>
+                <span>
+                  <span class="type-title">Услуга СТО</span>
+                  <span class="type-desc">Работы и услуги<br>автосервиса</span>
+                </span>
+                <span class="chevron">›</span>
+              </button>
+            </div>
+          </div>
+          ${cancelBar()}
+        </section>
+      `;
+    }
+
+    function renderGroup() {
+      setAccent(BLUE);
+      return renderSearchList({
+        title: "Выберите группу",
+        placeholder: "Поиск по группам",
+        items: data.groups,
+        selectedValue: state.group
+      });
+    }
+
+    function renderPart() {
+      setAccent(BLUE);
+      const items = data.parts[state.group] || [];
+      return renderSearchList({
+        title: state.group,
+        placeholder: "Поиск по запчастям",
+        items,
+        selectedValue: state.item
+      });
+    }
+
+    function renderPosition() {
+      setAccent(BLUE);
+      const items = data.positions[state.item] || [];
+      return renderSearchList({
+        title: state.item,
+        placeholder: "Поиск по положению",
+        items,
+        selectedValue: state.position
+      });
+    }
+
+    function renderServiceCategory() {
+      setAccent(PURPLE);
+      return renderSearchList({
+        title: "Выберите категорию",
+        placeholder: "Поиск по категориям",
+        items: data.serviceCategories,
+        selectedValue: state.group
+      });
+    }
+
+    function renderService() {
+      setAccent(PURPLE);
+      const items = data.services[state.group] || [];
+      return renderSearchList({
+        title: state.group,
+        placeholder: "Поиск по услугам",
+        items,
+        selectedValue: state.item
+      });
+    }
+
+    function renderServicePosition() {
+      setAccent(PURPLE);
+      const items = data.servicePositions[state.item] || [];
+      return renderSearchList({
+        title: state.item,
+        placeholder: "Выберите положение",
+        items,
+        selectedValue: state.position
+      });
+    }
+
+    function currentSummary() {
+      if (state.mode === "parts") {
+        return ["Автозапчасть", state.group, state.item, state.position];
+      }
+      return ["Услуга СТО", state.group, state.item, state.position];
+    }
+
+    function renderSuccess() {
+      setAccent(state.mode === "parts" ? BLUE : PURPLE);
+      const summary = currentSummary();
+
+      return `
+        <section class="screen">
+          <div class="content success-content">
+            <div class="success-mark">✓</div>
+            <h1 class="success-title">${state.mode === "parts" ? "Позиция добавлена" : "Услуга добавлена"}</h1>
+
+            <div class="summary-card">
+              ${summary.map((line, index) => `<p class="summary-line">${index === summary.length - 1 ? `<strong>${line}</strong>` : line}</p>`).join("")}
+            </div>
+
+            <div class="actions">
+              <button class="primary" data-action="add-more">Добавить еще позицию</button>
+              <button class="secondary" data-action="open-act">Перейти к акту дефектовки</button>
+            </div>
+          </div>
+          ${cancelBar()}
+        </section>
+      `;
+    }
+
+    function renderAct() {
+      setAccent(BLUE);
+      return `
+        <section class="screen">
+          ${topbar("Акт дефектовки")}
+          <div class="act-header">
+            <h1>Добавленные позиции</h1>
+            <p>Тестовый экран будущего акта</p>
+          </div>
+
+          ${state.added.length
+            ? `<div class="act-list">
+                ${state.added.map((item, index) => `
+                  <div class="act-card">
+                    <strong>${index + 1}. ${item.position}</strong>
+                    <span>${item.mode === "parts" ? "Автозапчасть" : "Услуга СТО"} → ${item.group} → ${item.item}</span>
+                  </div>
+                `).join("")}
+              </div>`
+            : `<div class="act-placeholder">Пока ни одной позиции не добавлено.</div>`
+          }
+
+          <div class="content" style="padding-top:0">
+            <button class="primary" data-action="add-more">Добавить позицию</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function render() {
+      const screens = {
+        type: renderType,
+        group: renderGroup,
+        part: renderPart,
+        position: renderPosition,
+        serviceCategory: renderServiceCategory,
+        service: renderService,
+        servicePosition: renderServicePosition,
+        success: renderSuccess,
+        act: renderAct
+      };
+
+      app.innerHTML = (screens[state.screen] || renderType)();
+      bindEvents();
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('[data-action="back"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          back();
+        });
+      });
+
+      document.querySelectorAll('[data-action="cancel"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          resetFlow();
+        });
+      });
+
+      document.querySelectorAll("[data-mode]").forEach(el => {
+        el.addEventListener("click", () => {
+          state.mode = el.dataset.mode;
+          haptic();
+
+          if (state.mode === "parts") {
+            setAccent(BLUE);
+            go("group");
+          } else {
+            setAccent(PURPLE);
+            go("serviceCategory");
+          }
+        });
+      });
+
+      document.querySelectorAll(".row[data-value]").forEach(el => {
+        el.addEventListener("click", () => {
+          const value = el.dataset.value;
+          haptic();
+
+          switch (state.screen) {
+            case "group":
+              state.group = value;
+              go("part");
+              break;
+
+            case "part":
+              state.item = value;
+              if ((data.positions[value] || []).length) {
+                go("position");
+              }
+              break;
+
+            case "position":
+              state.position = value;
+              addCurrent();
+              go("success");
+              break;
+
+            case "serviceCategory":
+              state.group = value;
+              if ((data.services[value] || []).length) {
+                go("service");
+              }
+              break;
+
+            case "service":
+              state.item = value;
+              if ((data.servicePositions[value] || []).length) {
+                go("servicePosition");
+              }
+              break;
+
+            case "servicePosition":
+              state.position = value;
+              addCurrent();
+              go("success");
+              break;
+          }
+        });
+      });
+
+      const input = document.getElementById("searchInput");
+      const list = document.getElementById("listContainer");
+
+      if (input && list) {
+        input.addEventListener("input", () => {
+          const query = input.value.trim().toLocaleLowerCase("ru");
+          const rows = [...list.querySelectorAll(".row")];
+          let visible = 0;
+
+          rows.forEach(rowEl => {
+            const text = rowEl.dataset.value.toLocaleLowerCase("ru");
+            const show = text.includes(query);
+            rowEl.style.display = show ? "grid" : "none";
+            if (show) visible += 1;
+          });
+
+          const oldEmpty = list.querySelector(".empty");
+          oldEmpty?.remove();
+
+          if (!visible) {
+            list.insertAdjacentHTML("beforeend", `<div class="empty">Ничего не найдено</div>`);
+          }
+        });
+      }
+
+      document.querySelectorAll('[data-action="add-more"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          resetFlow();
+        });
+      });
+
+      document.querySelectorAll('[data-action="open-act"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          state.history.push(state.screen);
+          state.screen = "act";
+          render();
+          window.scrollTo(0, 0);
+        });
+      });
+    }
+
+    function addCurrent() {
+      const item = {
+        mode: state.mode,
+        group: state.group,
+        item: state.item,
+        position: state.position
+      };
+
+      const key = JSON.stringify(item);
+      const exists = state.added.some(x => JSON.stringify(x) === key);
+
+      if (!exists) state.added.push(item);
+    }
+
+    function escapeAttr(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    render();
+  </script>
+</body>
+</html>
