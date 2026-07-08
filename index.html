@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
   <title>CarcityPRO</title>
-  <!-- CarcityPRO build: no-position-fix-v2 -->
+  <!-- CarcityPRO build: pdf-to-telegram-v1 -->
 
   <style>
     :root {
@@ -389,7 +389,26 @@
       border: 1.5px solid var(--green);
       background: #fff;
       color: var(--green);
-}
+    }
+
+    .primary:disabled,
+    .secondary:disabled {
+      opacity: .55;
+      cursor: default;
+    }
+
+    .pdf-status {
+      min-height: 20px;
+      margin: 12px 2px 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .pdf-status.error {
+      color: #B42318;
+    }
 
     .act-header {
       padding: 42px 16px 18px;
@@ -479,6 +498,9 @@
 
     const BLUE = "#0A5BE7";
     const PURPLE = "#7045D8";
+
+    // Вставь сюда временный HTTPS-адрес backend.
+    const API_URL = "PASTE_TRYCLOUDFLARE_URL_HERE";
 
     let data = null;
 
@@ -814,7 +836,21 @@
           }
 
           <div class="content" style="padding-top:0">
-            <button class="primary" data-action="add-more">Добавить позицию</button>
+            <div class="actions">
+              <button
+                class="primary"
+                data-action="generate-pdf"
+                ${state.added.length ? "" : "disabled"}
+              >
+                Получить PDF
+              </button>
+
+              <button class="secondary" data-action="add-more">
+                Добавить позицию
+              </button>
+            </div>
+
+            <div class="pdf-status" id="pdfStatus"></div>
           </div>
         </section>
       `;
@@ -851,6 +887,92 @@
       state.position = null;
       addCurrent();
       go("success");
+    }
+
+    async function generatePdfAct(button) {
+      const status = document.getElementById("pdfStatus");
+
+      if (!state.added.length) {
+        return;
+      }
+
+      if (!tg?.initData) {
+        if (status) {
+          status.className = "pdf-status error";
+          status.textContent = "Откройте приложение именно внутри Telegram.";
+        }
+        return;
+      }
+
+      if (API_URL === "PASTE_TRYCLOUDFLARE_URL_HERE") {
+        if (status) {
+          status.className = "pdf-status error";
+          status.textContent = "Сначала вставьте адрес backend в API_URL.";
+        }
+        return;
+      }
+
+      const oldText = button.textContent;
+      button.disabled = true;
+      button.textContent = "Формируем PDF…";
+
+      if (status) {
+        status.className = "pdf-status";
+        status.textContent = "Акт создаётся и отправляется в чат с ботом.";
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/generate-act`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            init_data: tg.initData,
+            items: state.added
+          })
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(result.detail || "Не удалось сформировать PDF.");
+        }
+
+        haptic("medium");
+
+        if (status) {
+          status.className = "pdf-status";
+          status.textContent = `PDF отправлен в Telegram. Акт №${result.act_number}`;
+        }
+
+        if (tg.showPopup) {
+          tg.showPopup(
+            {
+              title: "PDF готов",
+              message: "Акт дефектовки отправлен сообщением в чат с CarcityPRO.",
+              buttons: [{ id: "ok", type: "ok" }]
+            },
+            () => tg.close()
+          );
+        } else {
+          alert("PDF отправлен в чат с CarcityPRO.");
+        }
+      } catch (error) {
+        console.error(error);
+
+        if (status) {
+          status.className = "pdf-status error";
+          status.textContent = error.message || "Ошибка при создании PDF.";
+        }
+
+        try {
+          tg?.HapticFeedback?.notificationOccurred("error");
+        } catch (_) {}
+      } finally {
+        button.disabled = false;
+        button.textContent = oldText;
+      }
     }
 
     function bindEvents() {
@@ -1035,6 +1157,13 @@
           state.screen = "act";
           render();
           window.scrollTo(0, 0);
+        });
+      });
+
+
+      document.querySelectorAll('[data-action="generate-pdf"]').forEach(el => {
+        el.addEventListener("click", () => {
+          generatePdfAct(el);
         });
       });
     }
