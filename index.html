@@ -557,6 +557,27 @@
 
     const app = document.getElementById("app");
 
+
+    async function trackAppOpen() {
+      if (!tg?.initData) {
+        return;
+      }
+
+      try {
+        await fetch(`${API_URL}/api/app-open`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            init_data: tg.initData
+          })
+        });
+      } catch (error) {
+        console.warn("Не удалось записать запуск приложения:", error);
+      }
+    }
+
     async function loadData() {
       app.innerHTML = `
         <section class="screen">
@@ -578,6 +599,7 @@
 
         data = await response.json();
         render();
+        trackAppOpen();
       } catch (error) {
         console.error(error);
 
