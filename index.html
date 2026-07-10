@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
   <title>CarcityPRO</title>
-  <!-- CarcityPRO build: act-fields-v1 -->
+  <!-- CarcityPRO build: multi-position-price-quantity-v2 -->
 
   <style>
     :root {
@@ -503,6 +503,146 @@
       line-height: 1.45;
     }
 
+
+    .act-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .act-card-head strong {
+      margin: 0;
+      min-width: 0;
+    }
+
+    .act-select {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: #667085;
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .act-select input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .act-select-box {
+      width: 22px;
+      height: 22px;
+      border: 1.5px solid #C7D0DC;
+      border-radius: 6px;
+      background: #fff;
+      color: transparent;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 800;
+      transition: .15s ease;
+    }
+
+    .act-select input:checked + .act-select-box {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+
+    .act-item-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .item-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .item-field span {
+      color: #46505F;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .item-input {
+      width: 100%;
+      height: 42px;
+      border: 1px solid #CDD5E1;
+      border-radius: 9px;
+      outline: none;
+      padding: 0 11px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .item-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(0, 124, 90, .12);
+    }
+
+    .item-input::placeholder {
+      color: #A0A8B5;
+    }
+
+    .danger {
+      width: 100%;
+      min-height: 46px;
+      border: 1.5px solid #D92D20;
+      border-radius: 9px;
+      background: #fff;
+      color: #B42318;
+      font-size: 14px;
+      font-weight: 680;
+      cursor: pointer;
+    }
+
+    .danger:disabled {
+      opacity: .42;
+      cursor: default;
+    }
+
+    .multi-check {
+      width: 24px;
+      height: 24px;
+      border: 1.5px solid #C7D0DC;
+      border-radius: 7px;
+      background: #fff;
+      color: transparent;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      font-weight: 800;
+      transition: .15s ease;
+    }
+
+    .multi-position-row.selected .multi-check {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+
+    .position-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+      margin-top: auto;
+      border-top: 1px solid var(--line);
+      padding: 12px 16px max(15px, env(safe-area-inset-bottom));
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(12px);
+      display: grid;
+      gap: 10px;
+    }
+
     .act-placeholder {
       margin: 12px 16px 24px;
       padding: 18px;
@@ -640,7 +780,8 @@
       mode: null,
       group: null,
       item: null,
-      position: null,
+      selectedPositions: [],
+      deleteSelection: [],
       added: [],
       actInfo: {
         sto: loadSavedValue("carcitypro_sto"),
@@ -679,7 +820,7 @@
       state.mode = null;
       state.group = null;
       state.item = null;
-      state.position = null;
+      state.selectedPositions = [];
       render();
     }
 
@@ -712,6 +853,80 @@
           <span class="chevron">›</span>
         </button>
       `;
+    }
+
+    function multiPositionRow(item) {
+      const [title, icon] = item;
+      const selected = state.selectedPositions.includes(title);
+
+      return `
+        <button class="row multi-position-row ${selected ? "selected" : ""}" data-value="${escapeAttr(title)}">
+          <span class="row-icon">${icon || ""}</span>
+          <span class="row-copy">
+            <span class="row-title">${title}</span>
+          </span>
+          <span class="multi-check">${selected ? "✓" : ""}</span>
+        </button>
+      `;
+    }
+
+    function renderMultiPositionList({ title, placeholder, items }) {
+      const selectedCount = state.selectedPositions.length;
+
+      return `
+        <section class="screen">
+          ${topbar(title)}
+          <div class="content">
+            <div class="search-wrap">
+              <input class="search" id="searchInput" type="search" autocomplete="off" placeholder="${placeholder}">
+              <span class="search-icon">⌕</span>
+            </div>
+            <div class="list" id="listContainer">
+              ${items.map(item => multiPositionRow(item)).join("")}
+            </div>
+          </div>
+          <footer class="position-footer">
+            <button
+              class="primary"
+              data-action="confirm-positions"
+              ${selectedCount ? "" : "disabled"}
+            >
+              ${selectedCount ? `Добавить выбранные (${selectedCount})` : "Выберите расположение"}
+            </button>
+            <button class="cancel" data-action="cancel">Отмена</button>
+          </footer>
+        </section>
+      `;
+    }
+
+    function updatePositionConfirmButton() {
+      const button = document.querySelector('[data-action="confirm-positions"]');
+      const count = state.selectedPositions.length;
+
+      if (!button) return;
+
+      button.disabled = !count;
+      button.textContent = count
+        ? `Добавить выбранные (${count})`
+        : "Выберите расположение";
+    }
+
+    function togglePositionSelection(value, rowElement) {
+      const index = state.selectedPositions.indexOf(value);
+
+      if (index >= 0) {
+        state.selectedPositions.splice(index, 1);
+      } else {
+        state.selectedPositions.push(value);
+      }
+
+      const selected = state.selectedPositions.includes(value);
+      rowElement.classList.toggle("selected", selected);
+
+      const check = rowElement.querySelector(".multi-check");
+      if (check) check.textContent = selected ? "✓" : "";
+
+      updatePositionConfirmButton();
     }
 
     function globalSearchRow({ title, icon, group, kind }) {
@@ -834,11 +1049,10 @@
     function renderPosition() {
       setAccent(BLUE);
       const items = data.positions[state.item] || [];
-      return renderSearchList({
+      return renderMultiPositionList({
         title: state.item,
-        placeholder: "Поиск по положению",
-        items,
-        selectedValue: state.position
+        placeholder: "Поиск по расположению",
+        items
       });
     }
 
@@ -866,37 +1080,44 @@
     function renderServicePosition() {
       setAccent(PURPLE);
       const items = data.servicePositions[state.item] || [];
-      return renderSearchList({
+      return renderMultiPositionList({
         title: state.item,
-        placeholder: "Выберите положение",
-        items,
-        selectedValue: state.position
+        placeholder: "Поиск по расположению",
+        items
       });
     }
 
     function currentSummary() {
+      const positions = state.selectedPositions.join(", ");
+
       if (state.mode === "parts") {
-        return ["Автозапчасть", state.group, state.item, state.position].filter(Boolean);
+        return ["Автозапчасть", state.group, state.item, positions].filter(Boolean);
       }
-      return ["Услуга СТО", state.group, state.item, state.position].filter(Boolean);
+
+      return ["Услуга СТО", state.group, state.item, positions].filter(Boolean);
     }
 
     function renderSuccess() {
       setAccent(state.mode === "parts" ? BLUE : PURPLE);
       const summary = currentSummary();
+      const multiple = state.selectedPositions.length > 1;
+      const successTitle = state.mode === "parts"
+        ? (multiple ? "Позиции добавлены" : "Позиция добавлена")
+        : (multiple ? "Услуги добавлены" : "Услуга добавлена");
 
       return `
         <section class="screen">
           <div class="content success-content">
             <div class="success-mark">✓</div>
-            <h1 class="success-title">${state.mode === "parts" ? "Позиция добавлена" : "Услуга добавлена"}</h1>
+            <h1 class="success-title">${successTitle}</h1>
 
             <div class="summary-card">
               ${summary.map((line, index) => `<p class="summary-line">${index === summary.length - 1 ? `<strong>${line}</strong>` : line}</p>`).join("")}
             </div>
 
             <div class="actions">
-              <button class="primary" data-action="add-more">Добавить еще позицию</button>
+              <button class="primary" data-action="add-part">Добавить запчасть</button>
+              <button class="primary" data-action="add-service">Добавить услугу</button>
               <button class="secondary" data-action="open-act">Перейти к акту дефектовки</button>
             </div>
           </div>
@@ -907,6 +1128,8 @@
 
     function renderAct() {
       setAccent(BLUE);
+      const deleteCount = state.deleteSelection.length;
+
       return `
         <section class="screen">
           ${topbar("Акт дефектовки")}
@@ -966,10 +1189,60 @@
             ? `<div class="act-list">
                 ${state.added.map((item, index) => `
                   <div class="act-card">
-                    <strong>${index + 1}. ${item.position || item.item}</strong>
+                    <div class="act-card-head">
+                      <strong>${index + 1}. ${item.position || item.item}</strong>
+                      <label class="act-select">
+                        <input
+                          type="checkbox"
+                          data-action="select-delete"
+                          data-index="${index}"
+                          ${state.deleteSelection.includes(index) ? "checked" : ""}
+                        >
+                        <span class="act-select-box">✓</span>
+                        <span>Выбрать</span>
+                      </label>
+                    </div>
                     <span>${item.mode === "parts" ? "Автозапчасть" : "Услуга СТО"} → ${item.group} → ${item.item}</span>
+
+                    <div class="act-item-fields">
+                      <label class="item-field">
+                        <span>Кол-во</span>
+                        <input
+                          class="item-input"
+                          type="text"
+                          inputmode="decimal"
+                          maxlength="30"
+                          placeholder="Не указано"
+                          data-item-index="${index}"
+                          data-item-field="quantity"
+                          value="${escapeAttr(item.quantity || "")}"
+                        >
+                      </label>
+
+                      <label class="item-field">
+                        <span>Цена, ₸</span>
+                        <input
+                          class="item-input"
+                          type="text"
+                          inputmode="decimal"
+                          maxlength="50"
+                          placeholder="Не указано"
+                          data-item-index="${index}"
+                          data-item-field="price"
+                          value="${escapeAttr(item.price || "")}"
+                        >
+                      </label>
+                    </div>
                   </div>
                 `).join("")}
+
+                <button
+                  class="danger"
+                  data-action="delete-selected"
+                  ${deleteCount ? "" : "disabled"}
+                >
+                  ${deleteCount ? `Удалить выбранные (${deleteCount})` : "Выберите позиции для удаления"}
+                </button>
               </div>`
             : `<div class="act-placeholder">Пока ни одной позиции не добавлено.</div>`
           }
@@ -984,8 +1257,12 @@
                 Получить PDF
               </button>
 
-              <button class="secondary" data-action="add-more">
-                Добавить позицию
+              <button class="primary" data-action="add-part">
+                Добавить запчасть
+              </button>
+
+              <button class="primary" data-action="add-service">
+                Добавить услугу
               </button>
             </div>
 
@@ -1023,8 +1300,8 @@
     }
 
     function completeSelectionWithoutPosition() {
-      state.position = null;
-      addCurrent();
+      state.selectedPositions = [];
+      addCurrent(null);
       go("success");
     }
 
@@ -1162,7 +1439,7 @@
                 if (kind === "part") {
                   state.group = el.dataset.group;
                   state.item = value;
-                  state.position = null;
+                  state.selectedPositions = [];
 
                   if (hasPartPositions(value)) {
                     go("position");
@@ -1177,7 +1454,7 @@
 
               case "part":
                 state.item = value;
-                state.position = null;
+                state.selectedPositions = [];
 
                 if (hasPartPositions(value)) {
                   go("position");
@@ -1187,9 +1464,7 @@
                 break;
 
               case "position":
-                state.position = value;
-                addCurrent();
-                go("success");
+                togglePositionSelection(value, el);
                 break;
 
               case "serviceCategory":
@@ -1201,7 +1476,7 @@
 
               case "service":
                 state.item = value;
-                state.position = null;
+                state.selectedPositions = [];
 
                 if (hasServicePositions(value)) {
                   go("servicePosition");
@@ -1211,9 +1486,7 @@
                 break;
 
               case "servicePosition":
-                state.position = value;
-                addCurrent();
-                go("success");
+                togglePositionSelection(value, el);
                 break;
             }
           });
@@ -1285,10 +1558,27 @@
         });
       }
 
-      document.querySelectorAll('[data-action="add-more"]').forEach(el => {
+      document.querySelectorAll('[data-action="confirm-positions"]').forEach(el => {
+        el.addEventListener("click", () => {
+          if (!state.selectedPositions.length) return;
+
+          haptic();
+          addSelectedPositions();
+          go("success");
+        });
+      });
+
+      document.querySelectorAll('[data-action="add-part"]').forEach(el => {
         el.addEventListener("click", () => {
           haptic();
-          resetFlow();
+          startAddFlow("parts");
+        });
+      });
+
+      document.querySelectorAll('[data-action="add-service"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          startAddFlow("service");
         });
       });
 
@@ -1327,6 +1617,52 @@
         });
       }
 
+      document.querySelectorAll('[data-item-field]').forEach(el => {
+        el.addEventListener("input", () => {
+          const index = Number(el.dataset.itemIndex);
+          const field = el.dataset.itemField;
+          const item = state.added[index];
+
+          if (!item || !["quantity", "price"].includes(field)) return;
+          item[field] = el.value;
+        });
+      });
+
+      document.querySelectorAll('[data-action="select-delete"]').forEach(el => {
+        el.addEventListener("change", () => {
+          const index = Number(el.dataset.index);
+          const currentIndex = state.deleteSelection.indexOf(index);
+
+          if (el.checked && currentIndex < 0) {
+            state.deleteSelection.push(index);
+          } else if (!el.checked && currentIndex >= 0) {
+            state.deleteSelection.splice(currentIndex, 1);
+          }
+
+          const deleteButton = document.querySelector('[data-action="delete-selected"]');
+          const count = state.deleteSelection.length;
+
+          if (deleteButton) {
+            deleteButton.disabled = !count;
+            deleteButton.textContent = count
+              ? `Удалить выбранные (${count})`
+              : "Выберите позиции для удаления";
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-action="delete-selected"]').forEach(el => {
+        el.addEventListener("click", () => {
+          if (!state.deleteSelection.length) return;
+
+          const selected = new Set(state.deleteSelection);
+          state.added = state.added.filter((_, index) => !selected.has(index));
+          state.deleteSelection = [];
+          haptic("medium");
+          render();
+        });
+      });
+
       document.querySelectorAll('[data-action="generate-pdf"]').forEach(el => {
         el.addEventListener("click", () => {
           generatePdfAct(el);
@@ -1334,18 +1670,40 @@
       });
     }
 
-    function addCurrent() {
+    function startAddFlow(mode) {
+      state.history = [];
+      state.mode = mode;
+      state.group = null;
+      state.item = null;
+      state.selectedPositions = [];
+      state.deleteSelection = [];
+      state.screen = mode === "parts" ? "group" : "serviceCategory";
+      render();
+      window.scrollTo(0, 0);
+    }
+
+    function addCurrent(position = null) {
       const item = {
         mode: state.mode,
         group: state.group,
         item: state.item,
-        position: state.position
+        position,
+        quantity: "",
+        price: ""
       };
 
-      const key = JSON.stringify(item);
-      const exists = state.added.some(x => JSON.stringify(x) === key);
+      const exists = state.added.some(existing => (
+        existing.mode === item.mode
+        && existing.group === item.group
+        && existing.item === item.item
+        && (existing.position || null) === (item.position || null)
+      ));
 
       if (!exists) state.added.push(item);
+    }
+
+    function addSelectedPositions() {
+      state.selectedPositions.forEach(position => addCurrent(position));
     }
 
     function escapeAttr(value) {
@@ -1358,6 +1716,5 @@
 
     loadData();
   </script>
-<!-- force GitHub Pages rebuild -->  
 </body>
 </html>
