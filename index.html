@@ -610,6 +610,27 @@
       cursor: default;
     }
 
+    .multi-position-row {
+      min-height: 82px;
+      grid-template-columns: 58px 1fr 24px;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .position-visual {
+      width: 52px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+    }
+
+    .position-car-svg {
+      width: 48px;
+      height: 68px;
+      display: block;
+      overflow: visible;
+    }
+
     .multi-check {
       width: 24px;
       height: 24px;
@@ -855,13 +876,153 @@
       `;
     }
 
+    function positionVisualKey(position) {
+      const value = normalizeSearch(position);
+
+      if (value.includes("внутрен") && value.includes("лев")) return "inner-left";
+      if (value.includes("внутрен") && value.includes("прав")) return "inner-right";
+      if (value.includes("наруж") && value.includes("лев")) return "outer-left";
+      if (value.includes("наруж") && value.includes("прав")) return "outer-right";
+
+      if (value.includes("перед") && value.includes("лев")) return "front-left";
+      if (value.includes("перед") && value.includes("прав")) return "front-right";
+      if (value.includes("зад") && value.includes("лев")) return "rear-left";
+      if (value.includes("зад") && value.includes("прав")) return "rear-right";
+
+      if (value.includes("перед")) return "front";
+      if (value.includes("зад")) return "rear";
+      if (value.includes("верх")) return "upper";
+      if (value.includes("ниж")) return "lower";
+      if (value.includes("лев")) return "left";
+      if (value.includes("прав")) return "right";
+
+      return "center";
+    }
+
+    function positionHighlight(key) {
+      const shapes = {
+        "front-left":  { cx: 18, cy: 18, rx: 13, ry: 13 },
+        "front-right": { cx: 46, cy: 18, rx: 13, ry: 13 },
+        "rear-left":   { cx: 18, cy: 78, rx: 13, ry: 13 },
+        "rear-right":  { cx: 46, cy: 78, rx: 13, ry: 13 },
+        "left":        { cx: 14, cy: 48, rx: 10, ry: 31 },
+        "right":       { cx: 50, cy: 48, rx: 10, ry: 31 },
+        "front":       { cx: 32, cy: 17, rx: 22, ry: 12 },
+        "rear":        { cx: 32, cy: 79, rx: 22, ry: 12 },
+        "upper":       { cx: 32, cy: 34, rx: 18, ry: 12 },
+        "lower":       { cx: 32, cy: 62, rx: 18, ry: 12 },
+        "inner-left":  { cx: 25, cy: 48, rx: 8, ry: 24 },
+        "inner-right": { cx: 39, cy: 48, rx: 8, ry: 24 },
+        "outer-left":  { cx: 8, cy: 48, rx: 8, ry: 31 },
+        "outer-right": { cx: 56, cy: 48, rx: 8, ry: 31 },
+        "center":      { cx: 32, cy: 48, rx: 14, ry: 20 }
+      };
+
+      return shapes[key] || shapes.center;
+    }
+
+    function positionCarIcon(position) {
+      const key = positionVisualKey(position);
+      const shape = positionHighlight(key);
+
+      return `
+        <svg
+          class="position-car-svg"
+          viewBox="0 0 64 96"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <ellipse
+            cx="${shape.cx}"
+            cy="${shape.cy}"
+            rx="${shape.rx + 4}"
+            ry="${shape.ry + 4}"
+            fill="#00A77D"
+            opacity=".10"
+          />
+          <ellipse
+            cx="${shape.cx}"
+            cy="${shape.cy}"
+            rx="${shape.rx}"
+            ry="${shape.ry}"
+            fill="#00A77D"
+            opacity=".32"
+          />
+
+          <path
+            d="M23 5
+               C19 7 17 13 16 20
+               L13 31
+               L13 64
+               L16 76
+               C17 84 21 90 27 92
+               L37 92
+               C43 90 47 84 48 76
+               L51 64
+               L51 31
+               L48 20
+               C47 13 45 7 41 5
+               C36 3 28 3 23 5Z"
+            fill="#FFFFFF"
+            stroke="#273139"
+            stroke-width="1.7"
+            stroke-linejoin="round"
+          />
+
+          <path
+            d="M21 19
+               C24 14 40 14 43 19
+               L46 31
+               C38 29 26 29 18 31Z"
+            fill="#EAF1F0"
+            stroke="#7E8B91"
+            stroke-width="1"
+          />
+
+          <path
+            d="M18 65
+               C26 67 38 67 46 65
+               L43 77
+               C40 82 24 82 21 77Z"
+            fill="#EAF1F0"
+            stroke="#7E8B91"
+            stroke-width="1"
+          />
+
+          <rect
+            x="19"
+            y="33"
+            width="26"
+            height="30"
+            rx="8"
+            fill="#F7FAF9"
+            stroke="#9AA5AA"
+            stroke-width="1"
+          />
+
+          <path
+            d="M19 47 H45"
+            stroke="#C2CBC8"
+            stroke-width="1"
+          />
+
+          <path
+            d="M15 33 H11 M49 33 H53 M15 62 H11 M49 62 H53"
+            stroke="#273139"
+            stroke-width="2.4"
+            stroke-linecap="round"
+          />
+        </svg>
+      `;
+    }
+
     function multiPositionRow(item) {
-      const [title, icon] = item;
+      const [title] = item;
       const selected = state.selectedPositions.includes(title);
 
       return `
         <button class="row multi-position-row ${selected ? "selected" : ""}" data-value="${escapeAttr(title)}">
-          <span class="row-icon">${icon || ""}</span>
+          <span class="position-visual">${positionCarIcon(title)}</span>
           <span class="row-copy">
             <span class="row-title">${title}</span>
           </span>
