@@ -644,12 +644,12 @@
       font-weight: 800;
       transition: .15s ease;
     }
-    
+
     .multi-position-row.selected {
-        border: 1.5px solid var(--green);
-        background: color-mix(in srgb, var(--green) 6%, white);
+      border: 1.5px solid var(--green);
+      background: color-mix(in srgb, var(--green) 6%, white);
     }
-    
+
     .multi-position-row.selected .multi-check {
       border-color: var(--green);
       background: var(--green);
@@ -812,6 +812,7 @@
       actInfo: {
         sto: loadSavedValue("carcitypro_sto"),
         master: loadSavedValue("carcitypro_master"),
+        masterPhone: loadSavedValue("carcitypro_master_phone"),
         car: ""
       }
     };
@@ -1334,6 +1335,21 @@
             </label>
 
             <label class="field">
+              <span class="field-label">Номер телефона мастера</span>
+              <input
+                class="field-input"
+                id="masterPhoneInput"
+                type="tel"
+                inputmode="tel"
+                maxlength="50"
+                autocomplete="tel"
+                placeholder="Например: +7 777 123 45 67"
+                value="${escapeAttr(state.actInfo.masterPhone)}"
+              >
+              <span class="field-hint">Номер необязательный, но тоже сохранится.</span>
+            </label>
+
+            <label class="field">
               <span class="field-label">Автомобиль</span>
               <input
                 class="field-input"
@@ -1513,6 +1529,7 @@
             init_data: tg.initData,
             sto: state.actInfo.sto.trim(),
             master: state.actInfo.master.trim(),
+            master_phone: state.actInfo.masterPhone.trim(),
             car: state.actInfo.car.trim(),
             items: state.added
           })
@@ -1761,6 +1778,7 @@
 
       const stoInput = document.getElementById("stoInput");
       const masterInput = document.getElementById("masterInput");
+      const masterPhoneInput = document.getElementById("masterPhoneInput");
       const carInput = document.getElementById("carInput");
 
       if (stoInput) {
@@ -1774,6 +1792,13 @@
         masterInput.addEventListener("input", () => {
           state.actInfo.master = masterInput.value;
           saveValue("carcitypro_master", masterInput.value);
+        });
+      }
+
+      if (masterPhoneInput) {
+        masterPhoneInput.addEventListener("input", () => {
+          state.actInfo.masterPhone = masterPhoneInput.value;
+          saveValue("carcitypro_master_phone", masterPhoneInput.value);
         });
       }
 
