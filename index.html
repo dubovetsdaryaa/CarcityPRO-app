@@ -1177,6 +1177,7 @@
 
     function renderType() {
       setAccent(BLUE);
+      const hasActItems = state.added.length > 0;
 
       return `
         <section class="screen">
@@ -1204,6 +1205,14 @@
                 <span class="chevron">›</span>
               </button>
             </div>
+
+            ${hasActItems
+              ? `<div class="actions" style="margin-top:22px;">
+                  <button class="secondary" data-action="open-act">
+                    Перейти к акту дефектовки (${state.added.length})
+                  </button>
+                </div>`
+              : ""}
           </div>
           ${cancelBar()}
         </section>
