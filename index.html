@@ -1139,6 +1139,24 @@
       return results.slice(0, 60);
     }
 
+    function serviceSearchResults(query) {
+      const normalizedQuery = normalizeSearch(query);
+      const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+      const results = [];
+
+      for (const [group, items] of Object.entries(data.services || {})) {
+        for (const [title, icon] of items) {
+          const haystack = normalizeSearch(`${title} ${group}`);
+
+          if (tokens.every(token => haystack.includes(token))) {
+            results.push({ title, icon, group, kind: "service" });
+          }
+        }
+      }
+
+      return results.slice(0, 60);
+    }
+
     function renderSearchList({ title, placeholder, items, selectedValue, screenClass = "" }) {
       return `
         <section class="screen ${screenClass}">
@@ -1227,7 +1245,7 @@
       setAccent(PURPLE);
       return renderSearchList({
         title: "Выберите категорию",
-        placeholder: "Поиск по категориям",
+        placeholder: "Поиск услуги или категории",
         items: data.serviceCategories,
         selectedValue: state.group
       });
@@ -1651,9 +1669,21 @@
                 break;
 
               case "serviceCategory":
-                state.group = value;
-                if ((data.services[value] || []).length) {
-                  go("service");
+                if (el.dataset.kind === "service") {
+                  state.group = el.dataset.group;
+                  state.item = value;
+                  state.selectedPositions = [];
+
+                  if (hasServicePositions(value)) {
+                    go("servicePosition");
+                  } else {
+                    completeSelectionWithoutPosition();
+                  }
+                } else {
+                  state.group = value;
+                  if ((data.services[value] || []).length) {
+                    go("service");
+                  }
                 }
                 break;
 
@@ -1714,6 +1744,42 @@
 
           if (state.screen === "group" && !rawQuery) {
             list.innerHTML = (data.groups || [])
+              .map(item => row(item, item[0] === state.group))
+              .join("");
+
+            bindRowClicks();
+            return;
+          }
+
+          if (state.screen === "serviceCategory" && rawQuery) {
+            const serviceQuery = normalizeSearch(rawQuery);
+            const serviceTokens = serviceQuery.split(/\s+/).filter(Boolean);
+
+            const matchingCategories = (data.serviceCategories || [])
+              .filter(([title]) => {
+                const text = normalizeSearch(title);
+                return serviceTokens.every(token => text.includes(token));
+              })
+              .map(([title, icon]) => ({
+                title,
+                icon,
+                group: "",
+                kind: "serviceCategory"
+              }));
+
+            const matchingServices = serviceSearchResults(rawQuery);
+            const results = [...matchingCategories, ...matchingServices];
+
+            list.innerHTML = results.length
+              ? results.map(globalSearchRow).join("")
+              : `<div class="empty">Ничего не найдено</div>`;
+
+            bindRowClicks();
+            return;
+          }
+
+          if (state.screen === "serviceCategory" && !rawQuery) {
+            list.innerHTML = (data.serviceCategories || [])
               .map(item => row(item, item[0] === state.group))
               .join("");
 
