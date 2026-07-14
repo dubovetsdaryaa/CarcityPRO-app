@@ -581,6 +581,34 @@
       margin-top: 15px;
     }
 
+    .pending-list {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .pending-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .pending-title {
+      margin: 0 0 5px;
+      font-size: 15px;
+      font-weight: 760;
+      line-height: 1.3;
+    }
+
+    .pending-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     .item-field {
       display: grid;
       gap: 6px;
@@ -1589,6 +1617,9 @@
       const summary = currentSummary();
       const pendingCount = state.pendingItems.length;
       const itemType = state.mode === "parts" ? "запчасти" : "услуги";
+      const saveButtonText = pendingCount > 1
+        ? `Сохранить и добавить позиции (${pendingCount})`
+        : `Сохранить и добавить ${itemType}`;
 
       return `
         <section class="screen">
@@ -1600,7 +1631,7 @@
             </h1>
 
             <p class="intro-subtitle" style="margin-bottom:20px;">
-              Можно заполнить сейчас или пропустить и указать позже в акте.
+              Можно заполнить отдельно для каждой позиции или пропустить и указать позже в акте.
             </p>
 
             <div class="summary-card">
@@ -1608,39 +1639,50 @@
               ${pendingCount > 1 ? `<p class="summary-line"><strong>Будет добавлено позиций: ${pendingCount}</strong></p>` : ""}
             </div>
 
-            <div class="act-form" style="padding:0 0 22px;">
-              <label class="field">
-                <span class="field-label">Кол-во</span>
-                <input
-                  class="field-input"
-                  id="pendingQuantityInput"
-                  type="text"
-                  inputmode="decimal"
-                  maxlength="30"
-                  autocomplete="off"
-                  placeholder="Например: 1"
-                >
-                <span class="field-hint">Необязательно. Если пропустить, в расчёте PDF будет считаться как 1.</span>
-              </label>
+            <div class="pending-list">
+              ${state.pendingItems.map((item, index) => `
+                <div class="pending-card">
+                  <p class="pending-title">${escapeAttr(item.position || item.item)}</p>
+                  <p class="pending-subtitle">
+                    ${item.mode === "parts" ? "Автозапчасть" : "Услуга СТО"} → ${escapeAttr(item.group)} → ${escapeAttr(item.item)}
+                  </p>
 
-              <label class="field">
-                <span class="field-label">Цена, ₸</span>
-                <input
-                  class="field-input"
-                  id="pendingPriceInput"
-                  type="text"
-                  inputmode="decimal"
-                  maxlength="50"
-                  autocomplete="off"
-                  placeholder="Например: 25000"
-                >
-                <span class="field-hint">Необязательно. Можно будет изменить на экране акта.</span>
-              </label>
+                  <div class="act-item-fields">
+                    <label class="item-field">
+                      <span>Кол-во</span>
+                      <input
+                        class="item-input"
+                        type="text"
+                        inputmode="decimal"
+                        maxlength="30"
+                        autocomplete="off"
+                        placeholder="Например: 1"
+                        data-pending-index="${index}"
+                        data-pending-field="quantity"
+                      >
+                    </label>
+
+                    <label class="item-field">
+                      <span>Цена, ₸</span>
+                      <input
+                        class="item-input"
+                        type="text"
+                        inputmode="decimal"
+                        maxlength="50"
+                        autocomplete="off"
+                        placeholder="Например: 25000"
+                        data-pending-index="${index}"
+                        data-pending-field="price"
+                      >
+                    </label>
+                  </div>
+                </div>
+              `).join("")}
             </div>
 
             <div class="actions">
               <button class="primary" data-action="save-item-details">
-                Сохранить и добавить ${itemType}
+                ${saveButtonText}
               </button>
               <button class="secondary" data-action="skip-item-details">
                 Пропустить
@@ -2206,14 +2248,22 @@
 
       document.querySelectorAll('[data-action="save-item-details"]').forEach(el => {
         el.addEventListener("click", () => {
-          const quantityInput = document.getElementById("pendingQuantityInput");
-          const priceInput = document.getElementById("pendingPriceInput");
+          const details = state.pendingItems.map((_, index) => {
+            const quantityInput = document.querySelector(
+              `[data-pending-index="${index}"][data-pending-field="quantity"]`
+            );
+            const priceInput = document.querySelector(
+              `[data-pending-index="${index}"][data-pending-field="price"]`
+            );
+
+            return {
+              quantity: quantityInput?.value || "",
+              price: priceInput?.value || ""
+            };
+          });
 
           haptic();
-          addPendingItems({
-            quantity: quantityInput?.value || "",
-            price: priceInput?.value || ""
-          });
+          addPendingItems({ details });
           go("success");
         });
       });
@@ -2403,12 +2453,14 @@
       }
     }
 
-    function addPendingItems({ quantity = "", price = "" } = {}) {
-      state.pendingItems.forEach(item => {
+    function addPendingItems({ quantity = "", price = "", details = [] } = {}) {
+      state.pendingItems.forEach((item, index) => {
+        const detail = Array.isArray(details) ? details[index] : null;
+
         const enrichedItem = {
           ...item,
-          quantity: String(quantity || "").trim(),
-          price: String(price || "").trim()
+          quantity: String(detail?.quantity ?? quantity ?? "").trim(),
+          price: String(detail?.price ?? price ?? "").trim()
         };
 
         if (!itemAlreadyAdded(enrichedItem)) {
