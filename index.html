@@ -490,6 +490,44 @@
       font-family: inherit;
     }
 
+    .suggest-wrap {
+      position: relative;
+    }
+
+    .suggest-list {
+      display: grid;
+      gap: 7px;
+      margin-top: 7px;
+      max-height: 190px;
+      overflow-y: auto;
+    }
+
+    .suggest-option {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      padding: 10px 12px;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, .04);
+    }
+
+    .suggest-option strong {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .suggest-option span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
     .field-hint {
       margin-top: -2px;
       color: var(--muted);
@@ -862,7 +900,10 @@
         sto: loadSavedValue("carcitypro_sto"),
         master: loadSavedValue("carcitypro_master"),
         masterPhone: loadSavedValue("carcitypro_master_phone"),
-        car: "",
+        carBrand: "",
+        carModel: "",
+        carYear: "",
+        mileage: "",
         comment: ""
       }
     };
@@ -1442,6 +1483,156 @@
       return normalizeSearch(`${title} ${group} ${synonymTextFor(title, group)}`);
     }
 
+    function matchesSearchText(text, query) {
+      const tokens = normalizeSearch(query).split(/\s+/).filter(Boolean);
+      const haystack = normalizeSearch(text);
+
+      return tokens.length > 0 && tokens.every(token => haystack.includes(token));
+    }
+
+    function brandSearchText(brand) {
+      const synonyms = data.carBrandSynonyms?.[brand] || [];
+      return `${brand} ${synonyms.join(" ")}`;
+    }
+
+    function modelSearchText(brand, model) {
+      const brandSynonyms = data.carBrandSynonyms?.[brand] || [];
+      const modelSynonyms = data.carModelSynonyms?.[brand]?.[model] || [];
+
+      return `${brand} ${brandSynonyms.join(" ")} ${model} ${modelSynonyms.join(" ")}`;
+    }
+
+    function resolveCarBrand(value) {
+      const normalized = normalizeSearch(value);
+
+      if (!normalized) return "";
+
+      for (const brand of (data.carBrands || [])) {
+        if (normalizeSearch(brand) === normalized) {
+          return brand;
+        }
+
+        const synonyms = data.carBrandSynonyms?.[brand] || [];
+
+        if (synonyms.some(term => normalizeSearch(term) === normalized)) {
+          return brand;
+        }
+      }
+
+      return "";
+    }
+
+    function carBrandSuggestions(query) {
+      const normalized = normalizeSearch(query);
+
+      if (!normalized) {
+        return (data.carBrands || []).slice(0, 20);
+      }
+
+      return (data.carBrands || [])
+        .filter(brand => matchesSearchText(brandSearchText(brand), query))
+        .slice(0, 20);
+    }
+
+    function carModelSuggestions(query, brandInput = "") {
+      const selectedBrand = resolveCarBrand(brandInput);
+      const brands = selectedBrand
+        ? [selectedBrand]
+        : Object.keys(data.carModels || {});
+      const results = [];
+
+      for (const brand of brands) {
+        const models = data.carModels?.[brand] || [];
+
+        for (const model of models) {
+          const searchText = modelSearchText(brand, model);
+
+          if (!query.trim()) {
+            if (selectedBrand) {
+              results.push({ brand, model });
+            }
+          } else if (matchesSearchText(searchText, query)) {
+            results.push({ brand, model });
+          }
+
+          if (results.length >= 30) {
+            return results;
+          }
+        }
+      }
+
+      return results;
+    }
+
+    function buildCarText() {
+      const brand = state.actInfo.carBrand.trim();
+      const model = state.actInfo.carModel.trim();
+      const year = state.actInfo.carYear.trim();
+
+      let car = [brand, model].filter(Boolean).join(" ");
+
+      if (year) {
+        car = car ? `${car}, ${year}` : year;
+      }
+
+      return car;
+    }
+
+    function renderSuggestionButton({ title, subtitle, action, brand = "", model = "" }) {
+      return `
+        <button
+          type="button"
+          class="suggest-option"
+          data-action="${escapeAttr(action)}"
+          data-brand="${escapeAttr(brand)}"
+          data-model="${escapeAttr(model)}"
+        >
+          <strong>${title}</strong>
+          ${subtitle ? `<span>${subtitle}</span>` : ""}
+        </button>
+      `;
+    }
+
+    function renderBrandSuggestions() {
+      const input = document.getElementById("carBrandInput");
+      const list = document.getElementById("carBrandSuggestions");
+
+      if (!input || !list) return;
+
+      const query = input.value.trim();
+      const suggestions = carBrandSuggestions(query);
+
+      list.innerHTML = suggestions.length
+        ? suggestions.map(brand => renderSuggestionButton({
+            title: brand,
+            subtitle: data.carBrandSynonyms?.[brand]?.slice(0, 3).join(", ") || "",
+            action: "select-car-brand",
+            brand
+          })).join("")
+        : "";
+    }
+
+    function renderModelSuggestions() {
+      const brandInput = document.getElementById("carBrandInput");
+      const modelInput = document.getElementById("carModelInput");
+      const list = document.getElementById("carModelSuggestions");
+
+      if (!modelInput || !list) return;
+
+      const query = modelInput.value.trim();
+      const suggestions = carModelSuggestions(query, brandInput?.value || "");
+
+      list.innerHTML = suggestions.length
+        ? suggestions.map(({ brand, model }) => renderSuggestionButton({
+            title: model,
+            subtitle: brand,
+            action: "select-car-model",
+            brand,
+            model
+          })).join("")
+        : "";
+    }
+
     function partSearchResults(query) {
       const normalizedQuery = normalizeSearch(query);
       const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
@@ -1779,18 +1970,67 @@
               <span class="field-hint">Номер необязательный, но тоже сохранится.</span>
             </label>
 
-            <label class="field">
-              <span class="field-label">Автомобиль</span>
-              <input
-                class="field-input"
-                id="carInput"
-                type="text"
-                maxlength="200"
-                autocomplete="off"
-                placeholder="Например: Toyota Camry 70, 2021"
-                value="${escapeAttr(state.actInfo.car)}"
-              >
-            </label>
+            <div class="field">
+              <span class="field-label">Марка</span>
+              <div class="suggest-wrap">
+                <input
+                  class="field-input"
+                  id="carBrandInput"
+                  type="text"
+                  maxlength="80"
+                  autocomplete="off"
+                  placeholder="Например: Toyota"
+                  value="${escapeAttr(state.actInfo.carBrand)}"
+                >
+                <div class="suggest-list" id="carBrandSuggestions"></div>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Модель</span>
+              <div class="suggest-wrap">
+                <input
+                  class="field-input"
+                  id="carModelInput"
+                  type="text"
+                  maxlength="120"
+                  autocomplete="off"
+                  placeholder="Например: Camry"
+                  value="${escapeAttr(state.actInfo.carModel)}"
+                >
+                <div class="suggest-list" id="carModelSuggestions"></div>
+              </div>
+            </div>
+
+            <div class="act-item-fields" style="margin-top:0;">
+              <label class="field">
+                <span class="field-label">Год</span>
+                <input
+                  class="field-input"
+                  id="carYearInput"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="4"
+                  autocomplete="off"
+                  placeholder="2021"
+                  value="${escapeAttr(state.actInfo.carYear)}"
+                >
+              </label>
+
+              <label class="field">
+                <span class="field-label">Пробег</span>
+                <input
+                  class="field-input"
+                  id="carMileageInput"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="20"
+                  autocomplete="off"
+                  placeholder="180000"
+                  value="${escapeAttr(state.actInfo.mileage)}"
+                >
+              </label>
+            </div>
           </div>
 
           <div class="act-header" style="padding-top:0;">
@@ -1974,7 +2214,11 @@
             sto: state.actInfo.sto.trim(),
             master: state.actInfo.master.trim(),
             master_phone: state.actInfo.masterPhone.trim(),
-            car: state.actInfo.car.trim(),
+            car: buildCarText(),
+            car_brand: state.actInfo.carBrand.trim(),
+            car_model: state.actInfo.carModel.trim(),
+            car_year: state.actInfo.carYear.trim(),
+            mileage: state.actInfo.mileage.trim(),
             comment: state.actInfo.comment.trim(),
             items: state.added
           })
@@ -2307,7 +2551,10 @@
       const stoInput = document.getElementById("stoInput");
       const masterInput = document.getElementById("masterInput");
       const masterPhoneInput = document.getElementById("masterPhoneInput");
-      const carInput = document.getElementById("carInput");
+      const carBrandInput = document.getElementById("carBrandInput");
+      const carModelInput = document.getElementById("carModelInput");
+      const carYearInput = document.getElementById("carYearInput");
+      const carMileageInput = document.getElementById("carMileageInput");
 
       if (stoInput) {
         stoInput.addEventListener("input", () => {
@@ -2330,11 +2577,65 @@
         });
       }
 
-      if (carInput) {
-        carInput.addEventListener("input", () => {
-          state.actInfo.car = carInput.value;
+      if (carBrandInput) {
+        carBrandInput.addEventListener("input", () => {
+          state.actInfo.carBrand = carBrandInput.value;
+          renderBrandSuggestions();
+          renderModelSuggestions();
+        });
+
+        carBrandInput.addEventListener("focus", renderBrandSuggestions);
+      }
+
+      if (carModelInput) {
+        carModelInput.addEventListener("input", () => {
+          state.actInfo.carModel = carModelInput.value;
+          renderModelSuggestions();
+        });
+
+        carModelInput.addEventListener("focus", renderModelSuggestions);
+      }
+
+      if (carYearInput) {
+        carYearInput.addEventListener("input", () => {
+          state.actInfo.carYear = carYearInput.value.replace(/[^0-9]/g, "").slice(0, 4);
+          carYearInput.value = state.actInfo.carYear;
         });
       }
+
+      if (carMileageInput) {
+        carMileageInput.addEventListener("input", () => {
+          state.actInfo.mileage = carMileageInput.value.replace(/[^0-9]/g, "");
+          carMileageInput.value = state.actInfo.mileage;
+        });
+      }
+
+      document.querySelectorAll('[data-action="select-car-brand"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          state.actInfo.carBrand = el.dataset.brand || "";
+          if (carBrandInput) carBrandInput.value = state.actInfo.carBrand;
+
+          const list = document.getElementById("carBrandSuggestions");
+          if (list) list.innerHTML = "";
+
+          renderModelSuggestions();
+        });
+      });
+
+      document.querySelectorAll('[data-action="select-car-model"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          state.actInfo.carBrand = el.dataset.brand || state.actInfo.carBrand;
+          state.actInfo.carModel = el.dataset.model || "";
+
+          if (carBrandInput) carBrandInput.value = state.actInfo.carBrand;
+          if (carModelInput) carModelInput.value = state.actInfo.carModel;
+
+          const list = document.getElementById("carModelSuggestions");
+          if (list) list.innerHTML = "";
+        });
+      });
 
       const commentInput = document.getElementById("commentInput");
 
