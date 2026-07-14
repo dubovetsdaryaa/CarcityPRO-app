@@ -1371,6 +1371,37 @@
         .trim();
     }
 
+    function tokensEverywhere(term, text) {
+      const tokens = normalizeSearch(term).split(/\s+/).filter(Boolean);
+      const normalizedText = normalizeSearch(text);
+
+      return tokens.length > 0 && tokens.every(token => normalizedText.includes(token));
+    }
+
+    function synonymTextFor(title, group = "") {
+      const baseText = `${title} ${group}`;
+      const normalizedBase = normalizeSearch(baseText);
+      const synonyms = [];
+
+      for (const synonymGroup of (data.synonymGroups || [])) {
+        const isRelated = synonymGroup.some(term => {
+          const normalizedTerm = normalizeSearch(term);
+
+          return normalizedBase.includes(normalizedTerm) || tokensEverywhere(term, normalizedBase);
+        });
+
+        if (isRelated) {
+          synonyms.push(...synonymGroup);
+        }
+      }
+
+      return synonyms.join(" ");
+    }
+
+    function searchableText(title, group = "") {
+      return normalizeSearch(`${title} ${group} ${synonymTextFor(title, group)}`);
+    }
+
     function partSearchResults(query) {
       const normalizedQuery = normalizeSearch(query);
       const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
@@ -1378,7 +1409,7 @@
 
       for (const [group, items] of Object.entries(data.parts || {})) {
         for (const [title, icon] of items) {
-          const haystack = normalizeSearch(`${title} ${group}`);
+          const haystack = searchableText(title, group);
 
           if (tokens.every(token => haystack.includes(token))) {
             results.push({ title, icon, group, kind: "part" });
@@ -1396,7 +1427,7 @@
 
       for (const [group, items] of Object.entries(data.services || {})) {
         for (const [title, icon] of items) {
-          const haystack = normalizeSearch(`${title} ${group}`);
+          const haystack = searchableText(title, group);
 
           if (tokens.every(token => haystack.includes(token))) {
             results.push({ title, icon, group, kind: "service" });
@@ -1980,7 +2011,7 @@
 
             const matchingGroups = (data.groups || [])
               .filter(([title]) => {
-                const text = normalizeSearch(title);
+                const text = searchableText(title);
                 return groupTokens.every(token => text.includes(token));
               })
               .map(([title, icon]) => ({
@@ -2016,7 +2047,7 @@
 
             const matchingCategories = (data.serviceCategories || [])
               .filter(([title]) => {
-                const text = normalizeSearch(title);
+                const text = searchableText(title);
                 return serviceTokens.every(token => text.includes(token));
               })
               .map(([title, icon]) => ({
@@ -2051,7 +2082,7 @@
           let visible = 0;
 
           rows.forEach(rowEl => {
-            const text = normalizeSearch(rowEl.dataset.value);
+            const text = searchableText(rowEl.dataset.value, state.group || "");
             const show = text.includes(query);
             rowEl.style.display = show ? "grid" : "none";
             if (show) visible += 1;
