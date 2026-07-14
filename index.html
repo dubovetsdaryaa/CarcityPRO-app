@@ -1605,7 +1605,7 @@
       list.innerHTML = suggestions.length
         ? suggestions.map(brand => renderSuggestionButton({
             title: brand,
-            subtitle: data.carBrandSynonyms?.[brand]?.slice(0, 3).join(", ") || "",
+            subtitle: "",
             action: "select-car-brand",
             brand
           })).join("")
@@ -2610,32 +2610,46 @@
         });
       }
 
-      document.querySelectorAll('[data-action="select-car-brand"]').forEach(el => {
-        el.addEventListener("click", () => {
+      const carBrandSuggestionsList = document.getElementById("carBrandSuggestions");
+
+      if (carBrandSuggestionsList) {
+        carBrandSuggestionsList.addEventListener("click", event => {
+          const option = event.target.closest('[data-action="select-car-brand"]');
+
+          if (!option) return;
+
           haptic();
-          state.actInfo.carBrand = el.dataset.brand || "";
+          state.actInfo.carBrand = option.dataset.brand || "";
+          state.actInfo.carModel = "";
+
           if (carBrandInput) carBrandInput.value = state.actInfo.carBrand;
+          if (carModelInput) carModelInput.value = "";
 
-          const list = document.getElementById("carBrandSuggestions");
-          if (list) list.innerHTML = "";
+          carBrandSuggestionsList.innerHTML = "";
 
-          renderModelSuggestions();
+          const modelList = document.getElementById("carModelSuggestions");
+          if (modelList) modelList.innerHTML = "";
         });
-      });
+      }
 
-      document.querySelectorAll('[data-action="select-car-model"]').forEach(el => {
-        el.addEventListener("click", () => {
+      const carModelSuggestionsList = document.getElementById("carModelSuggestions");
+
+      if (carModelSuggestionsList) {
+        carModelSuggestionsList.addEventListener("click", event => {
+          const option = event.target.closest('[data-action="select-car-model"]');
+
+          if (!option) return;
+
           haptic();
-          state.actInfo.carBrand = el.dataset.brand || state.actInfo.carBrand;
-          state.actInfo.carModel = el.dataset.model || "";
+          state.actInfo.carBrand = option.dataset.brand || state.actInfo.carBrand;
+          state.actInfo.carModel = option.dataset.model || "";
 
           if (carBrandInput) carBrandInput.value = state.actInfo.carBrand;
           if (carModelInput) carModelInput.value = state.actInfo.carModel;
 
-          const list = document.getElementById("carModelSuggestions");
-          if (list) list.innerHTML = "";
+          carModelSuggestionsList.innerHTML = "";
         });
-      });
+      }
 
       const commentInput = document.getElementById("commentInput");
 

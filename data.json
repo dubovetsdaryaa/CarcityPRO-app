@@ -4228,7 +4228,6 @@
     "BAW",
     "Bentley",
     "Blaval",
-    "BMW",
     "Borgward",
     "Brilliance",
     "Bugatti",
@@ -4325,6 +4324,31 @@
     "Leapmotor",
     "Leopaard",
     "Lexus",
+    "Li",
+    "Lifan",
+    "Lincoln",
+    "Livan",
+    "Lotus",
+    "Lucid",
+    "Luxeed",
+    "Luxgen",
+    "Lynk & Co",
+    "Maextro",
+    "Mahindra",
+    "Maple",
+    "Maserati",
+    "Maxus",
+    "Maybach",
+    "Mazda",
+    "McLaren",
+    "Mercedes-Benz",
+    "Mercedes-Maybach",
+    "Mercury",
+    "Metrocab",
+    "MG",
+    "Mini",
+    "Mitsubishi",
+    "Nio",
     "Nissan",
     "Niutron",
     "NL",
@@ -4408,7 +4432,8 @@
     "Ретро-автомобили",
     "СМЗ",
     "ТагАЗ",
-    "УАЗ"
+    "УАЗ",
+    "BMW"
   ],
   "carModels": {
     "Acura": [
@@ -4633,231 +4658,6 @@
       "Turbo R"
     ],
     "Blaval": [
-      "Acura",
-      "AITO",
-      "Alfa Romeo",
-      "Alga",
-      "Alpina",
-      "Alpine",
-      "Arcfox",
-      "Aro",
-      "Aston Martin",
-      "Audi",
-      "Aurus",
-      "Avatr",
-      "BAIC",
-      "Bajaj",
-      "Baojun",
-      "BAW",
-      "Bentley",
-      "Blaval",
-      "Borgward",
-      "Brilliance",
-      "Bugatti",
-      "Buick",
-      "BYD",
-      "Cadillac",
-      "Changan",
-      "ChangFeng",
-      "Changhe",
-      "Chery",
-      "Chevrolet",
-      "Chrysler",
-      "Citroen",
-      "Core Power",
-      "Cupra",
-      "Dacia",
-      "Dadi",
-      "Daewoo",
-      "Daihatsu",
-      "Datsun",
-      "Dayun",
-      "Deepal",
-      "Denza",
-      "Derways",
-      "DFSK",
-      "Dodge",
-      "DongFeng",
-      "DS",
-      "Eagle",
-      "Enovate",
-      "Evergrande",
-      "Evolute",
-      "EXEED",
-      "Farizon",
-      "FAW",
-      "Ferrari",
-      "Fiat",
-      "Fisker",
-      "Ford",
-      "Forthing",
-      "Foton",
-      "GAC",
-      "Geely",
-      "Geely Galaxy",
-      "Genesis",
-      "GMC",
-      "Gonow",
-      "Great Wall",
-      "Guojin",
-      "Hafei",
-      "Haima",
-      "Hanteng",
-      "Haval",
-      "Hawtai",
-      "Hengchi",
-      "Hengrun",
-      "HiPhi",
-      "Honda",
-      "Hongqi",
-      "Hozon",
-      "HuangHai",
-      "Huansu",
-      "Huawei",
-      "Hummer",
-      "Hycan",
-      "Hyundai",
-      "iCar",
-      "IM",
-      "Ineos",
-      "Infiniti",
-      "Iran Khodro",
-      "Isuzu",
-      "JAC",
-      "Jaecoo",
-      "Jaguar",
-      "Jeep",
-      "Jetour",
-      "Jetta",
-      "JinBei",
-      "JINPENG",
-      "Jiyue",
-      "JMC",
-      "Jonway",
-      "Kaiyi",
-      "Karry",
-      "KG Mobility",
-      "Kia",
-      "Koenigsegg",
-      "KYC",
-      "Lamborghini",
-      "Lancia",
-      "Land Rover",
-      "Landian",
-      "Leapmotor",
-      "Leopaard",
-      "Lexus",
-      "Li",
-      "Lifan",
-      "Lincoln",
-      "Livan",
-      "Lotus",
-      "Lucid",
-      "Luxeed",
-      "Luxgen",
-      "Lynk & Co",
-      "Maextro",
-      "Mahindra",
-      "Maple",
-      "Maserati",
-      "Maxus",
-      "Maybach",
-      "Mazda",
-      "McLaren",
-      "Mercedes-Benz",
-      "Mercedes-Maybach",
-      "Mercury",
-      "Metrocab",
-      "MG",
-      "Mini",
-      "Mitsubishi",
-      "Nio",
-      "Nissan",
-      "Niutron",
-      "NL",
-      "Oldsmobile",
-      "OMODA",
-      "Opel",
-      "Ora",
-      "Peugeot",
-      "Plymouth",
-      "Polar Stone",
-      "Polestar",
-      "Pontiac",
-      "Porsche",
-      "Proton",
-      "Puch",
-      "Radar",
-      "RAM",
-      "Ravon",
-      "Renault",
-      "Renault Samsung",
-      "Rivian",
-      "Roewe",
-      "Rolls-Royce",
-      "Rover",
-      "Rox",
-      "Saab",
-      "Santana",
-      "Saturn",
-      "Scion",
-      "SEAT",
-      "Seres",
-      "Serpento",
-      "Shineray",
-      "ShuangHuan",
-      "Skoda",
-      "Skywell",
-      "Smart",
-      "Sol",
-      "Soueast",
-      "SRM",
-      "SsangYong",
-      "Subaru",
-      "Suzuki",
-      "SWM",
-      "Tank",
-      "Tesla",
-      "Tianma",
-      "Tianye",
-      "Toyota",
-      "Venturi",
-      "Venucia",
-      "VGV",
-      "VinFast",
-      "Volkswagen",
-      "Volvo",
-      "Vortex",
-      "Voyah",
-      "Wanfeng",
-      "Weltmeister",
-      "Wey",
-      "Wuling",
-      "Xiaomi",
-      "Xinkai",
-      "Xpeng",
-      "Yema",
-      "Yudo",
-      "Zeekr",
-      "Zhiji",
-      "Zotye",
-      "ZX",
-      "ВАЗ (Lada)",
-      "ВИС",
-      "ГАЗ",
-      "ЕрАЗ",
-      "ЗАЗ",
-      "ЗИЛ",
-      "ИЖ",
-      "ЛуАЗ",
-      "Москвич",
-      "РАФ",
-      "Ретро-автомобили",
-      "СМЗ",
-      "ТагАЗ",
-      "УАЗ"
-    ],
-    "BMW": [
       "Acura",
       "AITO",
       "Alfa Romeo",
@@ -7088,9 +6888,759 @@
       "NX 200t",
       "NX 250",
       "NX 300",
-      "NX 300h"
+      "NX 300h",
+      "NX 350",
+      "NX 350h",
+      "NX 450h+",
+      "RC",
+      "RC 200t",
+      "RC 300",
+      "RC 300h",
+      "RC 350",
+      "RC-F",
+      "RX",
+      "RX 200t",
+      "RX 270",
+      "RX 300",
+      "RX 330",
+      "RX 350",
+      "RX 350h",
+      "RX 400h",
+      "RX 450h",
+      "RX 500h",
+      "RZ",
+      "SC",
+      "SC 300",
+      "SC 400",
+      "SC 430",
+      "TX",
+      "UX",
+      "UX 200",
+      "UX 250h",
+      "UX300e"
+    ],
+    "Li": [
+      "i6",
+      "i8",
+      "L6",
+      "L7",
+      "L8",
+      "L9",
+      "Mega",
+      "One"
+    ],
+    "Lifan": [
+      "Breez",
+      "Cebrium",
+      "Celliya",
+      "M7",
+      "Murman",
+      "MyWay",
+      "Smily",
+      "Solano",
+      "X50",
+      "X60",
+      "X70",
+      "X80"
+    ],
+    "Lincoln": [
+      "Aviator",
+      "Continental",
+      "Corsair",
+      "LS",
+      "Mark LT",
+      "Mark VIII",
+      "MKC",
+      "MKS",
+      "MKX",
+      "MKZ",
+      "Nautilus",
+      "Navigator",
+      "Town Car"
+    ],
+    "Livan": [
+      "7",
+      "S6 Pro",
+      "X3 Pro",
+      "X6 Pro"
+    ],
+    "Lotus": [
+      "Elan",
+      "Eletre",
+      "Elise",
+      "Emeya",
+      "Esprit",
+      "Europa S",
+      "Evora",
+      "Excel",
+      "Exige"
+    ],
+    "Lucid": [
+      "Air",
+      "Gravity"
+    ],
+    "Luxeed": [
+      "R7",
+      "S7"
+    ],
+    "Luxgen": [
+      "5",
+      "7",
+      "U6 Turbo",
+      "U7 Turbo"
+    ],
+    "Lynk & Co": [
+      "01",
+      "03",
+      "05",
+      "06",
+      "07",
+      "08 EM-P",
+      "09",
+      "10",
+      "900",
+      "Z20"
+    ],
+    "Maextro": [
+      "S800"
+    ],
+    "Mahindra": [
+      "Scorpio"
+    ],
+    "Maple": [
+      "Leaf 80V"
+    ],
+    "Maserati": [
+      "228",
+      "3200 GT",
+      "4200 GT",
+      "Coupe",
+      "Ghibli",
+      "GranCabrio",
+      "GranSport",
+      "GranTurismo",
+      "Grecale",
+      "Levante",
+      "MC20",
+      "Quattroporte",
+      "Shamal",
+      "Spyder"
+    ],
+    "Maxus": [
+      "D90 Pro",
+      "Dana V1",
+      "EUNIQ 5",
+      "EV30",
+      "G10",
+      "G50",
+      "G90",
+      "T90",
+      "V80"
+    ],
+    "Maybach": [
+      "57",
+      "62"
+    ],
+    "Mazda": [
+      "121",
+      "2",
+      "3",
+      "323",
+      "5",
+      "6",
+      "626",
+      "929",
+      "Atenza",
+      "Axela",
+      "AZ-1",
+      "B - series",
+      "Biante",
+      "Bongo",
+      "Bongo Friendee",
+      "BT-50",
+      "Capella",
+      "Carol",
+      "Cosmo",
+      "Cronos",
+      "CX-3",
+      "CX-30",
+      "CX-4",
+      "CX-5",
+      "CX-50",
+      "CX-60",
+      "CX-7",
+      "CX-70",
+      "CX-9",
+      "CX-90",
+      "Demio",
+      "Efini MS-6",
+      "Efini MS-8",
+      "Efini MS-9",
+      "Eunos 500",
+      "Eunos 800",
+      "EZ-6",
+      "EZ-60",
+      "Familia",
+      "Lantis",
+      "Laputa",
+      "Luce",
+      "Millenia",
+      "MPV",
+      "MX-3",
+      "MX-5",
+      "MX-6",
+      "MX30",
+      "Navajo",
+      "Premacy",
+      "Proceed",
+      "Proceed Levante",
+      "Proceed Marvie",
+      "Protege",
+      "Roadster",
+      "RX-7",
+      "RX-8",
+      "Sentia",
+      "Tribute",
+      "Verisa",
+      "Xedos 6",
+      "Xedos 9"
+    ],
+    "McLaren": [
+      "570S",
+      "720S",
+      "Senna"
+    ],
+    "Mercedes-Benz": [
+      "190",
+      "A-Класс",
+      "A 140",
+      "A 150",
+      "A 160",
+      "A 170",
+      "A 180",
+      "A 190",
+      "A 200",
+      "A 210",
+      "A 220",
+      "A 250",
+      "A 35 AMG",
+      "A 45 AMG",
+      "AMG GT",
+      "B-Класс",
+      "B 150",
+      "B 160",
+      "B 170",
+      "B 180",
+      "B 200",
+      "B 220",
+      "B 250",
+      "C-Класс",
+      "C 160",
+      "C 180",
+      "C 200",
+      "C 220",
+      "C 230",
+      "C 240",
+      "C 250",
+      "C 260",
+      "C 270",
+      "C 280",
+      "C 30 AMG",
+      "C 300",
+      "C 32 AMG",
+      "C 320",
+      "C 350",
+      "C 36 AMG",
+      "C 400",
+      "C 43 AMG",
+      "C 450 AMG",
+      "C 55 AMG",
+      "C 63 AMG",
+      "Citan",
+      "CL-Класс",
+      "CL 180",
+      "CL 200",
+      "CL 220",
+      "CL 230",
+      "CL 420",
+      "CL 45 AMG",
+      "CL 500",
+      "CL 55 AMG",
+      "CL 550",
+      "CL 600",
+      "CL 63 AMG",
+      "CL 65 AMG",
+      "CLA-Класс",
+      "CLA 180",
+      "CLA 200",
+      "CLA 220",
+      "CLA 250",
+      "CLA 35 AMG",
+      "CLA 45 AMG",
+      "CLC-Класс",
+      "CLC 160",
+      "CLC 180",
+      "CLC 200",
+      "CLC 220",
+      "CLC 230",
+      "CLC 350",
+      "CLE-Класс",
+      "CLE 200",
+      "CLE 300",
+      "CLE 450",
+      "CLE 53 AMG",
+      "CLK-Класс",
+      "CLK 200",
+      "CLK 220",
+      "CLK 230",
+      "CLK 240",
+      "CLK 270",
+      "CLK 280",
+      "CLK 320",
+      "CLK 350",
+      "CLK 430",
+      "CLK 500",
+      "CLK 55 AMG",
+      "CLK 63 AMG",
+      "CLS-Класс",
+      "CLS 250",
+      "CLS 280",
+      "CLS 320",
+      "CLS 350",
+      "CLS 400",
+      "CLS 450",
+      "CLS 500",
+      "CLS 53 AMG",
+      "CLS 55 AMG",
+      "CLS 550",
+      "CLS 63 AMG",
+      "E-Класс",
+      "E 200",
+      "E 220",
+      "E 230",
+      "E 240",
+      "E 250",
+      "E 260",
+      "E 270",
+      "E 280",
+      "E 290",
+      "E 300",
+      "E 320",
+      "E 350",
+      "E 36 AMG",
+      "E 400",
+      "E 420",
+      "E 43 AMG",
+      "E 430",
+      "E 450",
+      "E 50",
+      "E 500",
+      "E 53 AMG",
+      "E 55 AMG",
+      "E 550",
+      "E 60 AMG",
+      "E 63 AMG",
+      "EQA",
+      "EQB",
+      "EQC",
+      "EQE",
+      "EQE SUV",
+      "EQS",
+      "EQS SUV",
+      "EQV",
+      "G-Класс",
+      "G 230",
+      "G 240",
+      "G 250",
+      "G 270",
+      "G 280",
+      "G 290",
+      "G 300",
+      "G 320",
+      "G 350",
+      "G 400",
+      "G 450",
+      "G 500",
+      "G 55 AMG",
+      "G 550",
+      "G 580 EQ",
+      "G 63 AMG",
+      "G 65 AMG",
+      "GL-Класс",
+      "GL 320",
+      "GL 350",
+      "GL 400",
+      "GL 420",
+      "GL 450",
+      "GL 500",
+      "GL 55 AMG",
+      "GL 550",
+      "GL 63 AMG",
+      "GLA-Класс",
+      "GLA 180",
+      "GLA 200",
+      "GLA 220",
+      "GLA 250",
+      "GLA 35 AMG",
+      "GLA 45 AMG",
+      "GLB-Класс",
+      "GLB 200",
+      "GLB 220",
+      "GLB 250",
+      "GLB 35 AMG",
+      "GLC Coupe",
+      "GLC Coupe 220",
+      "GLC Coupe 250",
+      "GLC Coupe 300",
+      "GLC Coupe 43 AMG",
+      "GLC Coupe 63 AMG",
+      "GLC-Класс",
+      "GLC 200",
+      "GLC 220",
+      "GLC 250",
+      "GLC 300",
+      "GLC 350",
+      "GLC 43 AMG",
+      "GLC 63 AMG",
+      "GLE Coupe",
+      "GLE Coupe 350d",
+      "GLE Coupe 400",
+      "GLE Coupe 43 AMG",
+      "GLE Coupe 450 AMG",
+      "GLE Coupe 53 AMG",
+      "GLE Coupe 63 AMG",
+      "GLE-Класс",
+      "GLE 250d",
+      "GLE 300",
+      "GLE 350",
+      "GLE 350d",
+      "GLE 400",
+      "GLE 43 AMG",
+      "GLE 450",
+      "GLE 500",
+      "GLE 53 AMG",
+      "GLE 580",
+      "GLE 63 AMG",
+      "GLK-Класс",
+      "GLK 200",
+      "GLK 220",
+      "GLK 250",
+      "GLK 280",
+      "GLK 300",
+      "GLK 320",
+      "GLK 350",
+      "GLS-Класс",
+      "GLS 350d",
+      "GLS 400",
+      "GLS 450",
+      "GLS 500",
+      "GLS 580",
+      "GLS 63 AMG",
+      "MB 100",
+      "ML-Класс",
+      "ML 230",
+      "ML 250",
+      "ML 270",
+      "ML 280",
+      "ML 300",
+      "ML 320",
+      "ML 350",
+      "ML 400",
+      "ML 420",
+      "ML 430",
+      "ML 450",
+      "ML 500",
+      "ML 55 AMG",
+      "ML 550",
+      "ML 63 AMG",
+      "R-Класс",
+      "R 280",
+      "R 300",
+      "R 320",
+      "R 350",
+      "R 500",
+      "R 63 AMG",
+      "S-Класс",
+      "S 220",
+      "S 250",
+      "S 260",
+      "S 280",
+      "S 300",
+      "S 320",
+      "S 350",
+      "S 380",
+      "S 400",
+      "S 420",
+      "S 430",
+      "S 450",
+      "S 500",
+      "S 55",
+      "S 550",
+      "S 560",
+      "S 580",
+      "S 600",
+      "S 63 AMG",
+      "S 65 AMG",
+      "S 680",
+      "SEC 500 AMG",
+      "SL-Класс",
+      "450 SLC",
+      "SL 280",
+      "SL 300",
+      "SL 320",
+      "SL 350",
+      "SL 380",
+      "SL 400",
+      "SL 420",
+      "SL 450",
+      "SL 500",
+      "SL 55 AMG",
+      "SL 560",
+      "SL 60 AMG",
+      "SL 600",
+      "SL 63 AMG",
+      "SL 65 AMG",
+      "SL 70 AMG",
+      "SL 73 AMG",
+      "SLC-Класс",
+      "SLC 180",
+      "SLC 200",
+      "SLC 250",
+      "SLC 300",
+      "SLC 43 AMG",
+      "SLK-Класс",
+      "SLK 200",
+      "SLK 230",
+      "SLK 250",
+      "SLK 280",
+      "SLK 300",
+      "SLK 32 AMG",
+      "SLK 320",
+      "SLK 350",
+      "SLK 55 AMG",
+      "SLR McLaren",
+      "SLS AMG",
+      "Sprinter",
+      "V-Класс",
+      "V 200",
+      "V 220",
+      "V 230",
+      "V 250",
+      "V 280",
+      "V 300",
+      "Vaneo",
+      "Viano",
+      "Vito",
+      "X-Класс",
+      "X 200",
+      "X 220",
+      "X 250",
+      "X 350"
+    ],
+    "Mercedes-Maybach": [
+      "G650 Landaulet Maybach",
+      "GLS-Класс",
+      "GLS 600",
+      "GLS 680",
+      "S-Класс",
+      "S 400",
+      "S 450",
+      "S 500",
+      "S 560",
+      "S 580",
+      "S 600",
+      "S 650",
+      "S 680",
+      "VS 680"
+    ],
+    "Mercury": [
+      "Cougar",
+      "Grand Marquis",
+      "Marauder",
+      "Mariner",
+      "Milan",
+      "Montego",
+      "Monterey",
+      "Mountaineer",
+      "Mystique",
+      "Sable",
+      "Topaz",
+      "Tracer",
+      "Villager"
+    ],
+    "Metrocab": [
+      "Metrocab I",
+      "Metrocab II"
+    ],
+    "MG": [
+      "3",
+      "350",
+      "4 EV",
+      "5",
+      "5 Scorpio",
+      "550",
+      "6",
+      "6 Pro",
+      "7",
+      "750",
+      "Cyberster",
+      "F",
+      "HS",
+      "One",
+      "RV8",
+      "RX5",
+      "T60",
+      "TF",
+      "Xpower SV",
+      "ZR",
+      "ZS",
+      "ZT"
+    ],
+    "Mini": [
+      "Cabrio",
+      "Clubman",
+      "Countryman",
+      "Coupe",
+      "Hatch",
+      "Paceman",
+      "Roadster"
+    ],
+    "Mitsubishi": [
+      "3000 GT",
+      "Airtrek",
+      "Aspire",
+      "ASX",
+      "Attrage",
+      "Carisma",
+      "Challenger",
+      "Chariot",
+      "Colt",
+      "Cordia",
+      "Debonair",
+      "Delica",
+      "Delica D:5",
+      "Destinator",
+      "Diamante",
+      "Dingo",
+      "Dion",
+      "Eclipse",
+      "Eclipse Cross",
+      "eK Wagon",
+      "Emeraude",
+      "Endeavor",
+      "Eterna",
+      "FTO",
+      "Galant",
+      "Grandis",
+      "GTO",
+      "i",
+      "i-MiEV",
+      "Jeep",
+      "L200",
+      "L300",
+      "L400",
+      "Lancer",
+      "Lancer Evolution",
+      "Legnum",
+      "Libero",
+      "Minica",
+      "Minicab MiEV",
+      "Mirage",
+      "Montero",
+      "Montero Sport",
+      "Nativa",
+      "Outlander",
+      "Outlander Sport",
+      "Pajero",
+      "Pajero Evolution",
+      "Pajero iO",
+      "Pajero Junior",
+      "Pajero Mini",
+      "Pajero Pinin",
+      "Pajero Sport",
+      "Proudia",
+      "RVR",
+      "Sapporo",
+      "Sigma/Magna",
+      "Space Gear",
+      "Space Runner",
+      "Space Star",
+      "Space Wagon",
+      "Starion",
+      "Toppo",
+      "Tredia",
+      "Xforce",
+      "Xpander",
+      "Xpander Cross",
+      "Zinger"
+    ],
+    "Nio": [
+      "ES6",
+      "ES7",
+      "ES8",
+      "ET5",
+      "ET7",
+      "L90"
     ],
     "Nissan": [
+      "100NX",
+      "180SX",
+      "200SX",
+      "240SX",
+      "300ZX",
+      "350Z",
+      "370Z",
+      "AD",
+      "Almera",
+      "Almera Classic",
+      "Almera Tino",
+      "Altima",
+      "Ariya",
+      "Armada",
+      "Avenir",
+      "Bassara",
+      "Bluebird",
+      "Caravan",
+      "Cedric",
+      "Cefiro",
+      "Cherry",
+      "Cima",
+      "Crew",
+      "Cube",
+      "Datsun",
+      "Dayz",
+      "Elgrand",
+      "Expert",
+      "Fairlady Z",
+      "Frontier",
+      "Fuga",
+      "Gloria",
+      "GT-R",
+      "Homy",
+      "Juke",
+      "Kicks",
+      "Kubistar",
+      "Lafesta",
+      "Largo",
+      "Latio",
+      "Laurel",
+      "Leaf",
+      "Leopard",
+      "Liberty",
+      "Lucino",
+      "March",
+      "Maxima",
+      "Micra",
+      "Mistral",
+      "Moco",
+      "Murano",
+      "N7",
+      "Navara",
+      "Note",
+      "NP300",
+      "NV100 Clipper",
+      "NV200",
+      "NV350",
       "Otti",
       "Pathfinder",
       "Patrol",
@@ -9068,6 +9618,21 @@
       "Буханка",
       "Профи",
       "Фермер"
+    ],
+    "BMW": [
+      "X1",
+      "X2",
+      "X3",
+      "X4",
+      "X5",
+      "X6",
+      "X7",
+      "3-Series",
+      "5-Series",
+      "M5",
+      "M3",
+      "iX",
+      "iX3"
     ]
   },
   "carBrandSynonyms": {
@@ -9516,7 +10081,7 @@
     ]
   },
   "carModelSynonyms": {
-    "Acura": {
+    "#REF!": {
       "Integra": [
         "Интегра",
         "Интэгра"
@@ -9525,9 +10090,7 @@
         "Легенд",
         "Леженд",
         "Ледженд"
-      ]
-    },
-    "Audi": {
+      ],
       "Coupe": [
         "Купе",
         "Купэ"
@@ -9542,25 +10105,11 @@
         "Куатро",
         "Кваттро"
       ],
-      "allroad": [
-        "олроуд",
-        "алроад",
-        "олрод"
-      ]
-    },
-    "BMW": {
-      "5 Series": [
-        "пятерка"
-      ]
-    },
-    "Buick": {
       "Century": [
         "Сентури",
         "Сэнчури",
         "Сентри"
-      ]
-    },
-    "BYD": {
+      ],
       "Dolphin": [
         "Долфин",
         "Дольфин",
@@ -9612,24 +10161,11 @@
         "Юан",
         "Юэн"
       ],
-      "Destroyer": [
-        "Дестроер",
-        "Дестройер"
-      ],
-      "Frigate": [
-        "Фригейт",
-        "Фригат",
-        "Фрегат"
-      ]
-    },
-    "Cadillac": {
       "Escalade": [
         "Эскалеид",
         "Эскалэйд",
         "Эскалад"
-      ]
-    },
-    "Changan": {
+      ],
       "Alsvin": [
         "Алсвин"
       ],
@@ -9659,18 +10195,6 @@
         "Уни-В",
         "Юни-Ви"
       ],
-      "Honor": [
-        "Хонор",
-        "Онор",
-        "Хонер"
-      ],
-      "UNI-S": [
-        "Юни-С",
-        "Уни-С",
-        "Юни-Эс"
-      ]
-    },
-    "Chery": {
       "Amulet": [
         "Амулет",
         "Эмьюлет",
@@ -9680,13 +10204,6 @@
         "Тигго",
         "Тиго"
       ],
-      "Arrizo": [
-        "Арризо",
-        "Аризо",
-        "Эрризо"
-      ]
-    },
-    "Chevrolet": {
       "Aveo": [
         "Авео",
         "Эвео",
@@ -9787,21 +10304,12 @@
       ],
       "Trailblazer": [
         "Трейлблейзер"
-      ]
-    },
-    "Chrysler": {
+      ],
       "Vision": [
         "Вижн",
         "Визион",
         "Вижен"
-      ]
-    },
-    "Citroen": {
-      "Aircross": [
-        "Эиркросс"
-      ]
-    },
-    "Dacia": {
+      ],
       "Duster": [
         "Дастер",
         "Дустер"
@@ -9811,41 +10319,26 @@
       ],
       "Sandero": [
         "Сандеро"
-      ]
-    },
-    "Dadi": {
+      ],
       "Shuttle": [
         "Шаттл",
         "Шатл"
-      ]
-    },
-    "Daewoo": {
+      ],
       "Gentra": [
         "Джентра",
         "гентра",
         "жентра"
       ],
-      "Towner": [
-        "Таунер",
-        "Тоунер",
-        "Товнер"
-      ]
-    },
-    "Daihatsu": {
       "Materia": [
         "материа",
         "материя"
       ],
       "Max": [
         "Макс"
-      ]
-    },
-    "Datsun": {
+      ],
       "mi-Do": [
         "мидо"
-      ]
-    },
-    "Dodge": {
+      ],
       "Caravan": [
         "Караван"
       ],
@@ -9854,32 +10347,15 @@
         "Чэлленджер",
         "Чалленджер",
         "Челенжер"
-      ]
-    },
-    "DongFeng": {
+      ],
       "Paladin": [
         "Паладин",
         "Пэладин"
-      ]
-    },
-    "Dongfeng": {
-      "Box": [
-        "Бокс"
-      ]
-    },
-    "Exeed": {
-      "Yaoguang": [
-        "Яогуанг",
-        "Яогуан"
-      ]
-    },
-    "Ferrari": {
+      ],
       "California": [
         "Калифорния",
         "Калифорниа"
-      ]
-    },
-    "Fiat": {
+      ],
       "Bravo": [
         "Браво",
         "Брейво"
@@ -9894,9 +10370,7 @@
       "Strada": [
         "Страда",
         "Стрейда"
-      ]
-    },
-    "Ford": {
+      ],
       "Aspire": [
         "Аспайр",
         "Эспайр"
@@ -9932,23 +10406,6 @@
       "Transit": [
         "Транзит"
       ],
-      "Popular": [
-        "Популар",
-        "Попьюлар",
-        "Попюлар"
-      ]
-    },
-    "GAZ": {
-      "Gazelle": [
-        "Газель",
-        "Газелле",
-        "Газэль"
-      ],
-      "Volga": [
-        "Волга"
-      ]
-    },
-    "Geely": {
       "Atlas": [
         "Атлас",
         "Этлас"
@@ -9992,31 +10449,6 @@
         "Тагелла",
         "Тьюджелла"
       ],
-      "Haoqing": [
-        "Хаокинг",
-        "Хаоцин",
-        "Хаукинг"
-      ],
-      "Haoyue": [
-        "Хаоюэ",
-        "Хаойю",
-        "Хаою"
-      ],
-      "Hisoon": [
-        "Хисун",
-        "Хайсун",
-        "Хисоон"
-      ],
-      "Otaka": [
-        "Отака"
-      ],
-      "Xingyue": [
-        "Ксингюэ",
-        "Сингъюэ",
-        "Зингьюе"
-      ]
-    },
-    "Geely Galaxy": {
       "L6": [
         "Л6"
       ],
@@ -10027,20 +10459,14 @@
         "Префейс",
         "Префэйс",
         "Прифэйс"
-      ]
-    },
-    "GMC": {
+      ],
       "Safari": [
         "Сафари"
-      ]
-    },
-    "Hafei": {
+      ],
       "Brio": [
         "Брио",
         "Брайо"
-      ]
-    },
-    "Haval": {
+      ],
       "Chitu": [
         "Читу",
         "Чайту"
@@ -10067,23 +10493,6 @@
         "Ксяолон",
         "Сиаолун"
       ],
-      "Dagou": [
-        "Дагоу",
-        "Дагу",
-        "Дэгоу"
-      ],
-      "KuGou": [
-        "Кугоу",
-        "Кугу",
-        "Куго"
-      ],
-      "Menglong": [
-        "Менглонг",
-        "Менлон",
-        "Мэнлун"
-      ]
-    },
-    "Honda": {
       "Accord": [
         "Аккорд",
         "Экорд",
@@ -10235,17 +10644,6 @@
         "Вигор",
         "Вайгор"
       ],
-      "Ballade": [
-        "Баллада",
-        "Баллад",
-        "Бэллэйд"
-      ],
-      "Jade": [
-        "Джейд",
-        "Джэйд"
-      ]
-    },
-    "Hyundai": {
       "Accent": [
         "Акцент",
         "Эксент",
@@ -10490,38 +10888,11 @@
         "Верна",
         "Вэрна"
       ],
-      "Alcazar": [
-        "Алказар",
-        "Элказар",
-        "Алькасар"
-      ],
-      "Celesta": [
-        "Селеста",
-        "Целеста"
-      ]
-    },
-    "JAC": {
       "Sunray": [
         "Санрэй",
         "Санрей",
         "Сунрэй"
       ],
-      "Refine": [
-        "Рефайн",
-        "Рефайне",
-        "Рефин"
-      ],
-      "Rein": [
-        "Рейн",
-        "Рэйн",
-        "Райн"
-      ],
-      "Yttrium": [
-        "Итриум",
-        "Иттриум"
-      ]
-    },
-    "Jaguar": {
       "E-Pace": [
         "И-пейс",
         "Е-пэйс",
@@ -10551,9 +10922,7 @@
         "Икс-Тайп",
         "Экс-Тайп",
         "Икстайп"
-      ]
-    },
-    "Jeep": {
+      ],
       "Cherokee": [
         "Чероки"
       ],
@@ -10570,9 +10939,7 @@
       "Renegade": [
         "Ренегат",
         "Ренегейд"
-      ]
-    },
-    "Jetour": {
+      ],
       "Dashing": [
         "Дашинг",
         "Дэшинг",
@@ -10582,16 +10949,12 @@
         "Тревелер",
         "Травеллер",
         "Трэвеллер"
-      ]
-    },
-    "JinBei": {
+      ],
       "Hiace": [
         "Хайс",
         "Хайэс",
         "Хиэйс"
-      ]
-    },
-    "Kia": {
+      ],
       "Avella": [
         "Авелла",
         "Авэлла"
@@ -10819,13 +11182,6 @@
         "Экс-Трек",
         "Икс-Трэк"
       ],
-      "Borrego": [
-        "Боррего",
-        "Борэго",
-        "Боррэго"
-      ]
-    },
-    "Land Rover": {
       "Defender": [
         "Дефендер",
         "Дифендер",
@@ -10851,11 +11207,6 @@
         "Рэндж Роувер",
         "Рэинж Ровэр"
       ],
-      "Evoque": [
-        "Эвок"
-      ]
-    },
-    "Li": {
       "L8": [
         "Л8"
       ],
@@ -10870,16 +11221,12 @@
         "Уан",
         "Ван",
         "Оне"
-      ]
-    },
-    "Maserati": {
+      ],
       "Levante": [
         "Леванте",
         "Ливанте",
         "Левант"
-      ]
-    },
-    "Mazda": {
+      ],
       "Atenza": [
         "Атенза",
         "Атендза",
@@ -10974,23 +11321,6 @@
         "Вериса",
         "Вэриса"
       ],
-      "Astina": [
-        "Астина",
-        "Эстина",
-        "Астайна"
-      ],
-      "Chantez": [
-        "Шантэ",
-        "Шантез",
-        "Шантэз",
-        "Чантез"
-      ]
-    },
-    "Mercedes-Benz": {
-      "E-Class": [
-        "ешка",
-        "e-класс"
-      ],
       "Citan": [
         "Ситан",
         "Цитан",
@@ -11015,29 +11345,6 @@
         "Вито",
         "Вайто"
       ],
-      "Actros": [
-        "Актрос",
-        "Эктрос"
-      ],
-      "Antos": [
-        "Антос",
-        "Энтос"
-      ],
-      "Arocs": [
-        "Арокс",
-        "Эрокс"
-      ],
-      "Atego": [
-        "Атего",
-        "Атэго",
-        "Этего"
-      ],
-      "Citaro": [
-        "Ситаро",
-        "Цитаро"
-      ]
-    },
-    "Mini": {
       "Cabrio": [
         "Кабрио",
         "Кэбрио"
@@ -11061,9 +11368,7 @@
         "Пейсмен",
         "Пэйсман",
         "Пэйсмэн"
-      ]
-    },
-    "Mitsubishi": {
+      ],
       "Airtrek": [
         "Аиртрек",
         "Эиртрек"
@@ -11223,15 +11528,6 @@
       "Zinger": [
         "Зингер"
       ],
-      "Canter": [
-        "Кантер",
-        "Кантэр"
-      ],
-      "Celeste": [
-        "Селест"
-      ]
-    },
-    "Nissan": {
       "Almera": [
         "Альмера",
         "Алмера",
@@ -11561,18 +11857,6 @@
         "Икс-Трэйл",
         "хтрейл"
       ],
-      "ARIYA": [
-        "Ариа",
-        "Эриа",
-        "Эириа",
-        "Ария"
-      ],
-      "Cabstar": [
-        "Кабстар",
-        "Кэбстар"
-      ]
-    },
-    "Opel": {
       "Astra": [
         "Астра"
       ],
@@ -11588,21 +11872,15 @@
       ],
       "Zafira": [
         "зафира"
-      ]
-    },
-    "Porsche": {
+      ],
       "Cayenne": [
         "каен",
         "Кайен"
-      ]
-    },
-    "Proton": {
+      ],
       "Persona": [
         "Персона",
         "Пирсона"
-      ]
-    },
-    "Renault": {
+      ],
       "Arkana": [
         "Аркана"
       ],
@@ -11630,9 +11908,7 @@
       ],
       "Talisman": [
         "Талисман"
-      ]
-    },
-    "Skoda": {
+      ],
       "Citigo": [
         "Ситиго",
         "Цитиго"
@@ -11693,23 +11969,9 @@
         "Ети",
         "Йети"
       ],
-      "Elroq": [
-        "Элрок",
-        "Эльрок"
-      ]
-    },
-    "SsangYong": {
       "Nomad": [
         "Номад"
-      ]
-    },
-    "Studebaker": {
-      "Champion": [
-        "Чемпион",
-        "Чампион"
-      ]
-    },
-    "Subaru": {
+      ],
       "Forester": [
         "Форестер"
       ],
@@ -11731,9 +11993,7 @@
       ],
       "Tribeca": [
         "трибека"
-      ]
-    },
-    "Suzuki": {
+      ],
       "Aerio": [
         "аэрио",
         "аерио"
@@ -11753,28 +12013,11 @@
       ],
       "Vitara": [
         "Витара"
-      ]
-    },
-    "Tazzari": {
-      "Zero": [
-        "zeto"
-      ]
-    },
-    "Tesla": {
+      ],
       "Cybertruck": [
         "Сайбертрак",
         "Кибертрак",
         "Сибертрак"
-      ]
-    },
-    "Toyota": {
-      "Camry": [
-        "Камри",
-        "Кэмри"
-      ],
-      "Land Cruiser": [
-        "крузак",
-        "ленд крузер"
       ],
       "4Runner": [
         "Форраннер",
@@ -11862,6 +12105,10 @@
       "Cami": [
         "Ками",
         "Кэми"
+      ],
+      "Camry": [
+        "Камри",
+        "Кэмри"
       ],
       "Carina": [
         "Карина"
@@ -12230,91 +12477,9 @@
         "Ярис",
         "Иарис"
       ],
-      "Carib": [
-        "кариб"
-      ],
-      "Comfort": [
-        "Комфорт"
-      ],
-      "COMS": [
-        "Комс",
-        "Комз"
-      ],
-      "Dyna": [
-        "Дайна",
-        "Дина"
-      ],
-      "Etios": [
-        "Этиос",
-        "Этьос"
-      ],
-      "Fielder": [
-        "Филдер",
-        "Филдэр"
-      ],
-      "Gracia": [
-        "Грация"
-      ],
-      "Lucida": [
-        "люсида"
-      ],
-      "Mark": [
-        "Марк"
-      ],
-      "Origin": [
-        "Ориджин"
-      ],
-      "Pixis": [
-        "Пиксис",
-        "Пиксиз"
-      ],
-      "Prado": [
-        "Прадо"
-      ],
-      "Proace": [
-        "Проэйс",
-        "Проэйсе"
-      ],
-      "Publica": [
-        "Публика",
-        "Паблика"
-      ],
-      "QUANTUM": [
-        "Квантум",
-        "Куантум"
-      ],
-      "Regius": [
-        "Региус",
-        "Реджиус"
-      ],
-      "Rukus": [
-        "Рукус",
-        "Ракус",
-        "Рукас"
-      ],
-      "Soluna": [
-        "Солуна",
-        "Солюна"
-      ],
-      "Surf": [
-        "Серф"
-      ],
-      "Will": [
-        "Вилл",
-        "Уилл",
-        "Вил"
-      ],
-      "Zelas": [
-        "Зелас",
-        "Зелэс"
-      ]
-    },
-    "Venucia": {
       "Star": [
         "Стар"
-      ]
-    },
-    "Volkswagen": {
+      ],
       "Amarok": [
         "Амарок",
         "Амэрок",
@@ -12511,13 +12676,6 @@
         "Вилорэн",
         "Ваилоран"
       ],
-      "Brasilia": [
-        "Бразилия",
-        "Бразилиа",
-        "Бразилья"
-      ]
-    },
-    "ВАЗ (Lada)": {
       "Granta": [
         "Гранта"
       ],
@@ -12536,6 +12694,353 @@
         "Иксрей",
         "Эксрей",
         "Эксрэй"
+      ]
+    },
+    "Audi": {
+      "allroad": [
+        "олроуд",
+        "алроад",
+        "олрод"
+      ]
+    },
+    "BMW": {
+      "5 Series": [
+        "пятерка"
+      ]
+    },
+    "BYD": {
+      "Destroyer": [
+        "Дестроер",
+        "Дестройер"
+      ],
+      "Frigate": [
+        "Фригейт",
+        "Фригат",
+        "Фрегат"
+      ]
+    },
+    "Changan": {
+      "Honor": [
+        "Хонор",
+        "Онор",
+        "Хонер"
+      ],
+      "UNI-S": [
+        "Юни-С",
+        "Уни-С",
+        "Юни-Эс"
+      ]
+    },
+    "Chery": {
+      "Arrizo": [
+        "Арризо",
+        "Аризо",
+        "Эрризо"
+      ]
+    },
+    "Citroen": {
+      "Aircross": [
+        "Эиркросс"
+      ]
+    },
+    "Daewoo": {
+      "Towner": [
+        "Таунер",
+        "Тоунер",
+        "Товнер"
+      ]
+    },
+    "Dongfeng": {
+      "Box": [
+        "Бокс"
+      ]
+    },
+    "Exeed": {
+      "Yaoguang": [
+        "Яогуанг",
+        "Яогуан"
+      ]
+    },
+    "Ford": {
+      "Popular": [
+        "Популар",
+        "Попьюлар",
+        "Попюлар"
+      ]
+    },
+    "GAZ": {
+      "Gazelle": [
+        "Газель",
+        "Газелле",
+        "Газэль"
+      ],
+      "Volga": [
+        "Волга"
+      ]
+    },
+    "Geely": {
+      "Haoqing": [
+        "Хаокинг",
+        "Хаоцин",
+        "Хаукинг"
+      ],
+      "Haoyue": [
+        "Хаоюэ",
+        "Хаойю",
+        "Хаою"
+      ],
+      "Hisoon": [
+        "Хисун",
+        "Хайсун",
+        "Хисоон"
+      ],
+      "Otaka": [
+        "Отака"
+      ],
+      "Xingyue": [
+        "Ксингюэ",
+        "Сингъюэ",
+        "Зингьюе"
+      ]
+    },
+    "Haval": {
+      "Dagou": [
+        "Дагоу",
+        "Дагу",
+        "Дэгоу"
+      ],
+      "KuGou": [
+        "Кугоу",
+        "Кугу",
+        "Куго"
+      ],
+      "Menglong": [
+        "Менглонг",
+        "Менлон",
+        "Мэнлун"
+      ]
+    },
+    "Honda": {
+      "Ballade": [
+        "Баллада",
+        "Баллад",
+        "Бэллэйд"
+      ],
+      "Jade": [
+        "Джейд",
+        "Джэйд"
+      ]
+    },
+    "Hyundai": {
+      "Alcazar": [
+        "Алказар",
+        "Элказар",
+        "Алькасар"
+      ],
+      "Celesta": [
+        "Селеста",
+        "Целеста"
+      ]
+    },
+    "JAC": {
+      "Refine": [
+        "Рефайн",
+        "Рефайне",
+        "Рефин"
+      ],
+      "Rein": [
+        "Рейн",
+        "Рэйн",
+        "Райн"
+      ],
+      "Yttrium": [
+        "Итриум",
+        "Иттриум"
+      ]
+    },
+    "Kia": {
+      "Borrego": [
+        "Боррего",
+        "Борэго",
+        "Боррэго"
+      ]
+    },
+    "Land Rover": {
+      "Evoque": [
+        "Эвок"
+      ]
+    },
+    "Mazda": {
+      "Astina": [
+        "Астина",
+        "Эстина",
+        "Астайна"
+      ],
+      "Chantez": [
+        "Шантэ",
+        "Шантез",
+        "Шантэз",
+        "Чантез"
+      ]
+    },
+    "Mercedes-Benz": {
+      "E-Class": [
+        "ешка",
+        "e-класс"
+      ],
+      "Actros": [
+        "Актрос",
+        "Эктрос"
+      ],
+      "Antos": [
+        "Антос",
+        "Энтос"
+      ],
+      "Arocs": [
+        "Арокс",
+        "Эрокс"
+      ],
+      "Atego": [
+        "Атего",
+        "Атэго",
+        "Этего"
+      ],
+      "Citaro": [
+        "Ситаро",
+        "Цитаро"
+      ]
+    },
+    "Mitsubishi": {
+      "Canter": [
+        "Кантер",
+        "Кантэр"
+      ],
+      "Celeste": [
+        "Селест"
+      ]
+    },
+    "Nissan": {
+      "ARIYA": [
+        "Ариа",
+        "Эриа",
+        "Эириа",
+        "Ария"
+      ],
+      "Cabstar": [
+        "Кабстар",
+        "Кэбстар"
+      ]
+    },
+    "Skoda": {
+      "Elroq": [
+        "Элрок",
+        "Эльрок"
+      ]
+    },
+    "Studebaker": {
+      "Champion": [
+        "Чемпион",
+        "Чампион"
+      ]
+    },
+    "Tazzari": {
+      "Zero": [
+        "zeto"
+      ]
+    },
+    "Toyota": {
+      "Camry": [
+        "камри",
+        "камрюха"
+      ],
+      "Land Cruiser": [
+        "крузак",
+        "ленд крузер"
+      ],
+      "Carib": [
+        "кариб"
+      ],
+      "Comfort": [
+        "Комфорт"
+      ],
+      "COMS": [
+        "Комс",
+        "Комз"
+      ],
+      "Dyna": [
+        "Дайна",
+        "Дина"
+      ],
+      "Etios": [
+        "Этиос",
+        "Этьос"
+      ],
+      "Fielder": [
+        "Филдер",
+        "Филдэр"
+      ],
+      "Gracia": [
+        "Грация"
+      ],
+      "Lucida": [
+        "люсида"
+      ],
+      "Mark": [
+        "Марк"
+      ],
+      "Origin": [
+        "Ориджин"
+      ],
+      "Pixis": [
+        "Пиксис",
+        "Пиксиз"
+      ],
+      "Prado": [
+        "Прадо"
+      ],
+      "Proace": [
+        "Проэйс",
+        "Проэйсе"
+      ],
+      "Publica": [
+        "Публика",
+        "Паблика"
+      ],
+      "QUANTUM": [
+        "Квантум",
+        "Куантум"
+      ],
+      "Regius": [
+        "Региус",
+        "Реджиус"
+      ],
+      "Rukus": [
+        "Рукус",
+        "Ракус",
+        "Рукас"
+      ],
+      "Soluna": [
+        "Солуна",
+        "Солюна"
+      ],
+      "Surf": [
+        "Серф"
+      ],
+      "Will": [
+        "Вилл",
+        "Уилл",
+        "Вил"
+      ],
+      "Zelas": [
+        "Зелас",
+        "Зелэс"
+      ]
+    },
+    "Volkswagen": {
+      "Brasilia": [
+        "Бразилия",
+        "Бразилиа",
+        "Бразилья"
       ]
     }
   }
