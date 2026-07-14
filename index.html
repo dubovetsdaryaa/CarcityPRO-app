@@ -481,6 +481,15 @@
       color: #98A2B3;
     }
 
+    .field-textarea {
+      height: auto;
+      min-height: 92px;
+      padding: 12px 14px;
+      resize: vertical;
+      line-height: 1.45;
+      font-family: inherit;
+    }
+
     .field-hint {
       margin-top: -2px;
       color: var(--muted);
@@ -818,13 +827,15 @@
       group: null,
       item: null,
       selectedPositions: [],
+      pendingItems: [],
       deleteSelection: [],
       added: [],
       actInfo: {
         sto: loadSavedValue("carcitypro_sto"),
         master: loadSavedValue("carcitypro_master"),
         masterPhone: loadSavedValue("carcitypro_master_phone"),
-        car: ""
+        car: "",
+        comment: ""
       }
     };
 
@@ -859,6 +870,7 @@
       state.group = null;
       state.item = null;
       state.selectedPositions = [];
+      state.pendingItems = [];
       render();
     }
 
@@ -1572,6 +1584,74 @@
       return ["Услуга СТО", state.group, state.item, positions].filter(Boolean);
     }
 
+    function renderItemDetails() {
+      setAccent(state.mode === "parts" ? BLUE : PURPLE);
+      const summary = currentSummary();
+      const pendingCount = state.pendingItems.length;
+      const itemType = state.mode === "parts" ? "запчасти" : "услуги";
+
+      return `
+        <section class="screen">
+          ${topbar("Данные позиции")}
+
+          <div class="content success-content">
+            <h1 class="success-title" style="margin-bottom:14px;">
+              Указать кол-во и цену?
+            </h1>
+
+            <p class="intro-subtitle" style="margin-bottom:20px;">
+              Можно заполнить сейчас или пропустить и указать позже в акте.
+            </p>
+
+            <div class="summary-card">
+              ${summary.map((line, index) => `<p class="summary-line">${index === summary.length - 1 ? `<strong>${line}</strong>` : line}</p>`).join("")}
+              ${pendingCount > 1 ? `<p class="summary-line"><strong>Будет добавлено позиций: ${pendingCount}</strong></p>` : ""}
+            </div>
+
+            <div class="act-form" style="padding:0 0 22px;">
+              <label class="field">
+                <span class="field-label">Кол-во</span>
+                <input
+                  class="field-input"
+                  id="pendingQuantityInput"
+                  type="text"
+                  inputmode="decimal"
+                  maxlength="30"
+                  autocomplete="off"
+                  placeholder="Например: 1"
+                >
+                <span class="field-hint">Необязательно. Если пропустить, в расчёте PDF будет считаться как 1.</span>
+              </label>
+
+              <label class="field">
+                <span class="field-label">Цена, ₸</span>
+                <input
+                  class="field-input"
+                  id="pendingPriceInput"
+                  type="text"
+                  inputmode="decimal"
+                  maxlength="50"
+                  autocomplete="off"
+                  placeholder="Например: 25000"
+                >
+                <span class="field-hint">Необязательно. Можно будет изменить на экране акта.</span>
+              </label>
+            </div>
+
+            <div class="actions">
+              <button class="primary" data-action="save-item-details">
+                Сохранить и добавить ${itemType}
+              </button>
+              <button class="secondary" data-action="skip-item-details">
+                Пропустить
+              </button>
+            </div>
+          </div>
+          ${cancelBar()}
+        </section>
+      `;
+    }
+
     function renderSuccess() {
       setAccent(state.mode === "parts" ? BLUE : PURPLE);
       const summary = currentSummary();
@@ -1737,6 +1817,19 @@
             : `<div class="act-placeholder">Пока ни одной позиции не добавлено.</div>`
           }
 
+          <div class="act-form" style="padding-top:0;">
+            <label class="field">
+              <span class="field-label">Комментарий мастера</span>
+              <textarea
+                class="field-input field-textarea"
+                id="commentInput"
+                maxlength="2000"
+                placeholder="Например: требуется дополнительная проверка после разборки"
+              >${escapeAttr(state.actInfo.comment || "")}</textarea>
+              <span class="field-hint">Необязательно. Комментарий попадёт в PDF под списком запчастей и услуг.</span>
+            </label>
+          </div>
+
           <div class="content" style="padding-top:0">
             <div class="actions">
               <button
@@ -1771,6 +1864,7 @@
         serviceCategory: renderServiceCategory,
         service: renderService,
         servicePosition: renderServicePosition,
+        itemDetails: renderItemDetails,
         success: renderSuccess,
         act: renderAct
       };
@@ -1791,8 +1885,8 @@
 
     function completeSelectionWithoutPosition() {
       state.selectedPositions = [];
-      addCurrent(null);
-      go("success");
+      preparePendingItems([buildCurrentItem(null)]);
+      go("itemDetails");
     }
 
     async function generatePdfAct(button) {
@@ -1839,6 +1933,7 @@
             master: state.actInfo.master.trim(),
             master_phone: state.actInfo.masterPhone.trim(),
             car: state.actInfo.car.trim(),
+            comment: state.actInfo.comment.trim(),
             items: state.added
           })
         });
@@ -2102,7 +2197,34 @@
           if (!state.selectedPositions.length) return;
 
           haptic();
-          addSelectedPositions();
+          preparePendingItems(
+            state.selectedPositions.map(position => buildCurrentItem(position))
+          );
+          go("itemDetails");
+        });
+      });
+
+      document.querySelectorAll('[data-action="save-item-details"]').forEach(el => {
+        el.addEventListener("click", () => {
+          const quantityInput = document.getElementById("pendingQuantityInput");
+          const priceInput = document.getElementById("pendingPriceInput");
+
+          haptic();
+          addPendingItems({
+            quantity: quantityInput?.value || "",
+            price: priceInput?.value || ""
+          });
+          go("success");
+        });
+      });
+
+      document.querySelectorAll('[data-action="skip-item-details"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          addPendingItems({
+            quantity: "",
+            price: ""
+          });
           go("success");
         });
       });
@@ -2161,6 +2283,14 @@
       if (carInput) {
         carInput.addEventListener("input", () => {
           state.actInfo.car = carInput.value;
+        });
+      }
+
+      const commentInput = document.getElementById("commentInput");
+
+      if (commentInput) {
+        commentInput.addEventListener("input", () => {
+          state.actInfo.comment = commentInput.value;
         });
       }
 
@@ -2229,8 +2359,8 @@
       window.scrollTo(0, 0);
     }
 
-    function addCurrent(position = null) {
-      const item = {
+    function buildCurrentItem(position = null) {
+      return {
         mode: state.mode,
         group: state.group,
         item: state.item,
@@ -2238,15 +2368,55 @@
         quantity: "",
         price: ""
       };
+    }
 
-      const exists = state.added.some(existing => (
-        existing.mode === item.mode
-        && existing.group === item.group
-        && existing.item === item.item
-        && (existing.position || null) === (item.position || null)
-      ));
+    function sameActItem(left, right) {
+      return (
+        left.mode === right.mode
+        && left.group === right.group
+        && left.item === right.item
+        && (left.position || null) === (right.position || null)
+      );
+    }
 
-      if (!exists) state.added.push(item);
+    function itemAlreadyAdded(item) {
+      return state.added.some(existing => sameActItem(existing, item));
+    }
+
+    function preparePendingItems(items) {
+      state.pendingItems = items.filter(item => !itemAlreadyAdded(item));
+
+      if (!state.pendingItems.length) {
+        const fallback = items[0];
+
+        if (fallback) {
+          state.pendingItems = [fallback];
+        }
+      }
+    }
+
+    function addCurrent(position = null) {
+      const item = buildCurrentItem(position);
+
+      if (!itemAlreadyAdded(item)) {
+        state.added.push(item);
+      }
+    }
+
+    function addPendingItems({ quantity = "", price = "" } = {}) {
+      state.pendingItems.forEach(item => {
+        const enrichedItem = {
+          ...item,
+          quantity: String(quantity || "").trim(),
+          price: String(price || "").trim()
+        };
+
+        if (!itemAlreadyAdded(enrichedItem)) {
+          state.added.push(enrichedItem);
+        }
+      });
+
+      state.pendingItems = [];
     }
 
     function addSelectedPositions() {
