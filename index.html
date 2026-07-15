@@ -863,6 +863,7 @@
 
     let data = null;
     let voiceRecognition = null;
+    let voiceStopRequested = false;
 
     const app = document.getElementById("app");
 
@@ -988,6 +989,7 @@
       deleteSelection: [],
       voiceTranscript: "",
       voiceCandidates: [],
+      voiceRecording: false,
       added: [],
       actInfo: {
         sto: loadSavedValue("carcitypro_sto"),
@@ -1026,6 +1028,13 @@
     }
 
     function resetFlow() {
+      voiceStopRequested = true;
+      state.voiceRecording = false;
+
+      try {
+        voiceRecognition?.stop?.();
+      } catch (_) {}
+
       state.screen = "type";
       state.history = [];
       state.mode = null;
@@ -1929,25 +1938,56 @@
         return null;
       }
 
-      const positions = [];
+      let bestPositions = null;
+      let bestWidth = Infinity;
 
-      for (const root of titleRoots) {
-        const index = segmentRoots.findIndex(token => (
-          token === root
-          || token.includes(root)
-          || root.includes(token)
-        ));
+      for (let startIndex = 0; startIndex < segmentRoots.length; startIndex += 1) {
+        let cursor = startIndex;
+        const positions = [];
+        let ok = true;
 
-        if (index < 0) {
-          return null;
+        for (const root of titleRoots) {
+          let foundIndex = -1;
+
+          for (let index = cursor; index < segmentRoots.length; index += 1) {
+            const token = segmentRoots[index];
+
+            if (
+              token === root
+              || token.includes(root)
+              || root.includes(token)
+            ) {
+              foundIndex = index;
+              break;
+            }
+          }
+
+          if (foundIndex < 0) {
+            ok = false;
+            break;
+          }
+
+          positions.push(foundIndex);
+          cursor = foundIndex + 1;
         }
 
-        positions.push(index);
+        if (!ok) continue;
+
+        const width = positions[positions.length - 1] - positions[0];
+
+        if (width < bestWidth) {
+          bestWidth = width;
+          bestPositions = positions;
+        }
+      }
+
+      if (!bestPositions) {
+        return null;
       }
 
       return {
-        start: Math.min(...positions),
-        end: Math.max(...positions),
+        start: bestPositions[0],
+        end: bestPositions[bestPositions.length - 1],
         length: titleRoots.length
       };
     }
@@ -2017,7 +2057,31 @@
       return removeNestedVoiceMatches(matches);
     }
 
-    function detectVoicePositions(segment, itemName, mode) {
+    function voicePositionFlags(text) {
+      const value = normalizeSearch(text);
+
+      return {
+        hasFront: /перед|передн/.test(value),
+        hasRear: /зад|задн/.test(value),
+        hasLeft: /лев|слева/.test(value),
+        hasRight: /прав|справа/.test(value),
+        hasUpper: /верх|верхн/.test(value),
+        hasLower: /ниж|нижн/.test(value)
+      };
+    }
+
+    function hasAnyVoicePositionFlag(flags) {
+      return Boolean(
+        flags.hasFront
+        || flags.hasRear
+        || flags.hasLeft
+        || flags.hasRight
+        || flags.hasUpper
+        || flags.hasLower
+      );
+    }
+
+    function detectVoicePositionsForMatch(segment, itemName, mode, match, matches, matchIndex) {
       const available = mode === "parts"
         ? (data.positions?.[itemName] || [])
         : (data.servicePositions?.[itemName] || []);
@@ -2026,50 +2090,47 @@
         return [null];
       }
 
-      const value = normalizeSearch(segment);
-      const hasFront = /перед|передн/.test(value);
-      const hasRear = /зад|задн/.test(value);
-      const hasLeft = /лев|слева/.test(value);
-      const hasRight = /прав|справа/.test(value);
-      const hasUpper = /верх|верхн/.test(value);
-      const hasLower = /ниж|нижн/.test(value);
-
-      const matches = available.filter(position => {
-        const positionText = normalizeSearch(position);
-
-        if (hasFront && !positionText.includes("перед")) return false;
-        if (hasRear && !positionText.includes("зад")) return false;
-        if (hasLeft && !positionText.includes("лев")) return false;
-        if (hasRight && !positionText.includes("прав")) return false;
-        if (hasUpper && !positionText.includes("верх")) return false;
-        if (hasLower && !positionText.includes("ниж")) return false;
-
-        return hasFront || hasRear || hasLeft || hasRight || hasUpper || hasLower;
-      });
-
-      if (matches.length) {
-        return matches;
-      }
-
-      return [null];
-    }
-
-    function voiceContextForMatch(segment, match, matches, index) {
       const words = normalizeSearch(segment)
         .split(/\s+/)
         .filter(Boolean);
 
-      const previous = matches[index - 1];
-      const next = matches[index + 1];
+      const previous = matches[matchIndex - 1];
+      const next = matches[matchIndex + 1];
 
-      const start = previous
-        ? Math.min(words.length, previous.span.end + 1)
-        : 0;
-      const end = next
-        ? Math.max(start, next.span.start)
-        : words.length;
+      const beforeStart = previous ? previous.span.end + 1 : 0;
+      const beforeText = words
+        .slice(beforeStart, match.span.start)
+        .join(" ");
 
-      return words.slice(start, end).join(" ");
+      const afterEnd = next ? next.span.start : words.length;
+      const afterText = words
+        .slice(match.span.end + 1, afterEnd)
+        .join(" ");
+
+      let flags = voicePositionFlags(beforeText);
+
+      if (!hasAnyVoicePositionFlag(flags)) {
+        flags = voicePositionFlags(afterText);
+      }
+
+      const matchesByPosition = available.filter(position => {
+        const positionText = normalizeSearch(position);
+
+        if (flags.hasFront && !positionText.includes("перед")) return false;
+        if (flags.hasRear && !positionText.includes("зад")) return false;
+        if (flags.hasLeft && !positionText.includes("лев")) return false;
+        if (flags.hasRight && !positionText.includes("прав")) return false;
+        if (flags.hasUpper && !positionText.includes("верх")) return false;
+        if (flags.hasLower && !positionText.includes("ниж")) return false;
+
+        return hasAnyVoicePositionFlag(flags);
+      });
+
+      if (matchesByPosition.length) {
+        return matchesByPosition;
+      }
+
+      return [null];
     }
 
     function voiceCandidateKey(candidate) {
@@ -2090,8 +2151,14 @@
         const matches = voiceSegmentMatches(segment);
 
         matches.forEach((match, matchIndex) => {
-          const context = voiceContextForMatch(segment, match, matches, matchIndex);
-          const positions = detectVoicePositions(context, match.item, match.mode);
+          const positions = detectVoicePositionsForMatch(
+            segment,
+            match.item,
+            match.mode,
+            match,
+            matches,
+            matchIndex
+          );
 
           positions.forEach(position => {
             const candidate = {
@@ -2387,7 +2454,23 @@
             </p>
 
             ${supported
-              ? `<button class="primary" data-action="start-voice">🎙 Начать запись</button>`
+              ? `<div class="actions">
+                  <button
+                    class="primary"
+                    data-action="start-voice"
+                    ${state.voiceRecording ? "disabled" : ""}
+                  >
+                    ${state.voiceRecording ? "🎙 Запись идёт…" : "🎙 Начать запись"}
+                  </button>
+
+                  <button
+                    class="secondary"
+                    data-action="stop-voice"
+                    ${state.voiceRecording ? "" : "disabled"}
+                  >
+                    ⏹ Остановить запись
+                  </button>
+                </div>`
               : `<div class="pdf-status error">На этом устройстве браузер не поддерживает распознавание речи. Можно вставить текст вручную ниже.</div>`
             }
 
@@ -3277,7 +3360,7 @@
 
           voiceRecognition = new Recognition();
           voiceRecognition.lang = "ru-RU";
-          voiceRecognition.continuous = false;
+          voiceRecognition.continuous = true;
           voiceRecognition.interimResults = true;
 
           const initialText = (state.voiceTranscript || "").trim();
@@ -3300,12 +3383,22 @@
           }
 
           voiceRecognition.onstart = () => {
+            state.voiceRecording = true;
+            voiceStopRequested = false;
+
+            const stopButton = document.querySelector('[data-action="stop-voice"]');
+
             if (status) {
               status.className = "voice-status success";
-              status.textContent = "Слушаю… Скажите одну или несколько позиций. После паузы запись завершится.";
+              status.textContent = "Слушаю… Запись остановится только после нажатия «Остановить запись».";
             }
-            el.textContent = "🎙 Идёт запись…";
+
+            el.textContent = "🎙 Запись идёт…";
             el.disabled = true;
+
+            if (stopButton) {
+              stopButton.disabled = false;
+            }
           };
 
           voiceRecognition.onresult = event => {
@@ -3340,17 +3433,57 @@
           };
 
           voiceRecognition.onend = () => {
+            if (state.voiceRecording && !voiceStopRequested) {
+              try {
+                setTimeout(() => {
+                  if (state.voiceRecording && !voiceStopRequested) {
+                    voiceRecognition?.start?.();
+                  }
+                }, 250);
+              } catch (_) {}
+
+              return;
+            }
+
+            state.voiceRecording = false;
+
+            const stopButton = document.querySelector('[data-action="stop-voice"]');
+
             el.textContent = "🎙 Начать запись";
             el.disabled = false;
 
+            if (stopButton) {
+              stopButton.disabled = true;
+            }
+
             if (status && state.voiceTranscript) {
               status.className = "voice-status";
-              status.textContent = "Запись завершена. Позиции разделены запятыми. Нажмите «Найти позиции».";
+              status.textContent = "Запись остановлена. Нажмите «Найти позиции».";
             }
           };
 
           haptic();
           voiceRecognition.start();
+        });
+      });
+
+      document.querySelectorAll('[data-action="stop-voice"]').forEach(el => {
+        el.addEventListener("click", () => {
+          const status = document.getElementById("voiceStatus");
+
+          haptic();
+          voiceStopRequested = true;
+          state.voiceRecording = false;
+          el.disabled = true;
+
+          try {
+            voiceRecognition?.stop?.();
+          } catch (_) {}
+
+          if (status) {
+            status.className = "voice-status";
+            status.textContent = "Останавливаю запись…";
+          }
         });
       });
 
