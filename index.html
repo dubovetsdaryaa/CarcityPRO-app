@@ -1766,8 +1766,94 @@
       return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
     }
 
-    function splitVoiceText(text) {
+    function compactRepeatedVoiceWords(text) {
+      let words = String(text || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(" ")
+        .filter(Boolean);
+
+      if (!words.length) return "";
+
+      for (let size = 5; size >= 1; size -= 1) {
+        let changed = true;
+
+        while (changed) {
+          changed = false;
+          const compacted = [];
+
+          for (let index = 0; index < words.length;) {
+            const current = words
+              .slice(index, index + size)
+              .map(word => normalizeSearch(word))
+              .join(" ");
+            const next = words
+              .slice(index + size, index + size * 2)
+              .map(word => normalizeSearch(word))
+              .join(" ");
+
+            if (
+              current
+              && next
+              && current === next
+              && words.slice(index + size, index + size * 2).length === size
+            ) {
+              compacted.push(...words.slice(index, index + size));
+              index += size * 2;
+              changed = true;
+            } else {
+              compacted.push(words[index]);
+              index += 1;
+            }
+          }
+
+          words = compacted;
+        }
+      }
+
+      return words.join(" ").trim();
+    }
+
+    function cleanVoiceTranscript(text) {
+      return String(text || "")
+        .split(/[,;\n]+/)
+        .map(part => compactRepeatedVoiceWords(part))
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    function voiceTokenRoot(token) {
+      let value = normalizeSearch(token).replace(/[^a-zа-я0-9]+/gi, "");
+
+      if (value.length <= 4) return value;
+
+      const endings = [
+        "ыми", "ими", "ого", "его", "ому", "ему", "ыми", "ими",
+        "ая", "яя", "ое", "ее", "ые", "ие", "ый", "ий", "ой",
+        "ую", "юю", "ых", "их", "ам", "ям", "ах", "ях", "ом",
+        "ем", "ов", "ев", "а", "я", "ы", "и", "у", "ю", "е"
+      ];
+
+      for (const ending of endings) {
+        if (value.endsWith(ending) && value.length - ending.length >= 4) {
+          return value.slice(0, -ending.length);
+        }
+      }
+
+      return value;
+    }
+
+    function voiceTokenRoots(text) {
       return normalizeSearch(text)
+        .split(/\s+/)
+        .map(voiceTokenRoot)
+        .filter(token => token.length > 2);
+    }
+
+    function splitVoiceText(text) {
+      return cleanVoiceTranscript(text)
+        .toLocaleLowerCase("ru")
+        .replaceAll("ё", "е")
         .replace(/[.!?]/g, ",")
         .split(/[,;\n]+|(?:\s+потом\s+)|(?:\s+также\s+)|(?:\s+еще\s+)|(?:\s+ещё\s+)/)
         .map(part => part.trim())
@@ -1783,39 +1869,53 @@
         .map(term => normalizeSearch(term))
         .filter(Boolean);
 
+      const ignoredRoots = new Set([
+        "передн", "перед", "задн", "зад", "лев", "прав",
+        "верхн", "верх", "нижн", "ниж", "слева", "справа",
+        "замен", "помен", "постав", "нужн", "над", "одн",
+        "дв", "три", "четыр", "пять", "штук", "шт"
+      ]);
+
+      const segmentRoots = [...new Set(voiceTokenRoots(segment))]
+        .filter(token => !ignoredRoots.has(token));
+      const titleRoots = [...new Set(voiceTokenRoots(title))]
+        .filter(token => !ignoredRoots.has(token));
+      const haystackRoots = new Set(
+        voiceTokenRoots(haystack).filter(token => !ignoredRoots.has(token))
+      );
+
+      if (!segmentRoots.length) {
+        return 0;
+      }
+
       let score = 0;
 
-      if (normalizedSegment.includes(titleText)) {
-        score += 120 + titleText.length;
+      if (titleText.length > 3 && normalizedSegment.includes(titleText)) {
+        score += 140 + titleText.length;
       }
 
       synonyms.forEach(term => {
-        if (term && normalizedSegment.includes(term)) {
-          score += 90 + term.length;
+        if (term.length > 3 && normalizedSegment.includes(term)) {
+          score += 100 + term.length;
         }
       });
 
-      const ignored = new Set([
-        "передняя", "передний", "передние", "передняя", "переднюю", "передних",
-        "задняя", "задний", "задние", "заднюю", "задних",
-        "левая", "левый", "левые", "левую", "левых",
-        "правая", "правый", "правые", "правую", "правых",
-        "верхняя", "верхний", "верхние", "нижняя", "нижний", "нижние",
-        "замена", "поменять", "поставить", "нужно", "надо", "и", "на", "по", "шт", "штук", "одна", "один", "две", "два"
-      ]);
+      const titleMatches = titleRoots.filter(token => segmentRoots.includes(token));
+      const haystackMatches = segmentRoots.filter(token => haystackRoots.has(token));
 
-      const tokens = normalizedSegment
-        .split(/\s+/)
-        .filter(token => token.length > 2 && !ignored.has(token));
+      score += titleMatches.length * 45;
+      score += haystackMatches.length * 12;
 
-      const matchedTokens = tokens.filter(token => haystack.includes(token));
-
-      if (matchedTokens.length) {
-        score += matchedTokens.length * 12;
+      if (titleRoots.length && titleMatches.length === titleRoots.length) {
+        score += 120;
       }
 
-      if (tokens.length && matchedTokens.length === tokens.length) {
-        score += 25;
+      if (titleRoots.length >= 2 && titleMatches.length >= 2) {
+        score += 90;
+      }
+
+      if (titleRoots.length >= 2 && titleMatches.length === 1) {
+        score += 15;
       }
 
       return score;
@@ -3091,7 +3191,7 @@
 
           voiceRecognition = new Recognition();
           voiceRecognition.lang = "ru-RU";
-          voiceRecognition.continuous = true;
+          voiceRecognition.continuous = false;
           voiceRecognition.interimResults = true;
 
           const initialText = (state.voiceTranscript || "").trim();
@@ -3116,7 +3216,7 @@
           voiceRecognition.onstart = () => {
             if (status) {
               status.className = "voice-status success";
-              status.textContent = "Слушаю… Делайте небольшую паузу между позициями.";
+              status.textContent = "Слушаю… Скажите одну или несколько позиций. После паузы запись завершится.";
             }
             el.textContent = "🎙 Идёт запись…";
             el.disabled = true;
@@ -3140,7 +3240,7 @@
               }
             }
 
-            const fullText = buildVoiceTranscript(interimText);
+            const fullText = cleanVoiceTranscript(buildVoiceTranscript(interimText));
             state.voiceTranscript = fullText;
 
             if (input) input.value = fullText;
@@ -3173,7 +3273,8 @@
           const input = document.getElementById("voiceTranscriptInput");
           const status = document.getElementById("voiceStatus");
 
-          state.voiceTranscript = input?.value || "";
+          state.voiceTranscript = cleanVoiceTranscript(input?.value || "");
+          if (input) input.value = state.voiceTranscript;
           state.voiceCandidates = findVoiceCandidates(state.voiceTranscript);
 
           haptic();
