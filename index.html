@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
   <title>CarcityPRO</title>
@@ -212,7 +212,7 @@
       padding: 0 42px 0 14px;
       color: var(--text);
       background: #fff;
-      font-size: 15px;
+      font-size: 16px;
     }
 
     .search:focus {
@@ -469,7 +469,7 @@
       padding: 0 14px;
       background: #FFFFFF;
       color: var(--text);
-      font-size: 15px;
+      font-size: 16px;
     }
 
     .field-input:focus {
@@ -667,7 +667,7 @@
       padding: 0 11px;
       background: #fff;
       color: var(--text);
-      font-size: 14px;
+      font-size: 16px;
     }
 
     .item-input:focus {
@@ -808,6 +808,40 @@
     let data = null;
 
     const app = document.getElementById("app");
+
+    function lockViewportZoom() {
+      let lastTouchEnd = 0;
+
+      document.addEventListener("touchstart", event => {
+        if (event.touches && event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      document.addEventListener("touchmove", event => {
+        if (event.touches && event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      document.addEventListener("touchend", event => {
+        const now = Date.now();
+
+        if (now - lastTouchEnd <= 300) {
+          event.preventDefault();
+        }
+
+        lastTouchEnd = now;
+      }, { passive: false });
+
+      ["gesturestart", "gesturechange", "gestureend"].forEach(eventName => {
+        document.addEventListener(eventName, event => {
+          event.preventDefault();
+        }, { passive: false });
+      });
+    }
+
+    lockViewportZoom();
 
 
     async function trackAppOpen() {
