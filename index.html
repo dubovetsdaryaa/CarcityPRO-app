@@ -2196,7 +2196,8 @@
             </h1>
 
             <p class="intro-subtitle" style="margin-bottom:18px;">
-              Например: передняя правая стойка стабилизатора, задняя левая стойка амортизатора.
+              Например: передняя правая стойка стабилизатора, пауза, задняя левая стойка амортизатора.
+              Пауза будет считаться разделителем между позициями.
             </p>
 
             ${supported
@@ -3093,12 +3094,29 @@
           voiceRecognition.continuous = true;
           voiceRecognition.interimResults = true;
 
-          let finalText = state.voiceTranscript || "";
+          const initialText = (state.voiceTranscript || "").trim();
+          const finalSegments = initialText
+            ? initialText.split(/[,;\n]+/).map(part => part.trim()).filter(Boolean)
+            : [];
+
+          function buildVoiceTranscript(interimText = "") {
+            const finalText = finalSegments
+              .map(part => part.trim())
+              .filter(Boolean)
+              .join(", ");
+
+            return [finalText, interimText.trim()]
+              .filter(Boolean)
+              .join(finalText && interimText.trim() ? ", " : "")
+              .replace(/\s+,/g, ",")
+              .replace(/,{2,}/g, ",")
+              .trim();
+          }
 
           voiceRecognition.onstart = () => {
             if (status) {
               status.className = "voice-status success";
-              status.textContent = "Слушаю… Говорите запчасти и услуги.";
+              status.textContent = "Слушаю… Делайте небольшую паузу между позициями.";
             }
             el.textContent = "🎙 Идёт запись…";
             el.disabled = true;
@@ -3107,17 +3125,22 @@
           voiceRecognition.onresult = event => {
             let interimText = "";
 
-            for (let index = event.resultIndex; index < event.results.length; index += 1) {
-              const text = event.results[index][0].transcript;
+            for (let index = 0; index < event.results.length; index += 1) {
+              const result = event.results[index];
+              const text = String(result[0]?.transcript || "")
+                .replace(/\s+/g, " ")
+                .trim();
 
-              if (event.results[index].isFinal) {
-                finalText = `${finalText} ${text}`.trim();
-              } else {
-                interimText += text;
+              if (!text) continue;
+
+              if (result.isFinal) {
+                finalSegments[index] = text;
+              } else if (index >= event.resultIndex) {
+                interimText = `${interimText} ${text}`.trim();
               }
             }
 
-            const fullText = `${finalText} ${interimText}`.trim();
+            const fullText = buildVoiceTranscript(interimText);
             state.voiceTranscript = fullText;
 
             if (input) input.value = fullText;
@@ -3136,7 +3159,7 @@
 
             if (status && state.voiceTranscript) {
               status.className = "voice-status";
-              status.textContent = "Запись завершена. Нажмите «Найти позиции».";
+              status.textContent = "Запись завершена. Позиции разделены запятыми. Нажмите «Найти позиции».";
             }
           };
 
