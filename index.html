@@ -1921,26 +1921,100 @@
       return score;
     }
 
-    function bestVoiceCatalogMatch(segment, mode) {
+    function voiceMatchSpan(segment, title) {
+      const segmentRoots = voiceTokenRoots(segment);
+      const titleRoots = [...new Set(voiceTokenRoots(title))];
+
+      if (!segmentRoots.length || !titleRoots.length) {
+        return null;
+      }
+
+      const positions = [];
+
+      for (const root of titleRoots) {
+        const index = segmentRoots.findIndex(token => (
+          token === root
+          || token.includes(root)
+          || root.includes(token)
+        ));
+
+        if (index < 0) {
+          return null;
+        }
+
+        positions.push(index);
+      }
+
+      return {
+        start: Math.min(...positions),
+        end: Math.max(...positions),
+        length: titleRoots.length
+      };
+    }
+
+    function allVoiceCatalogMatches(segment, mode) {
       const source = mode === "parts" ? (data.parts || {}) : (data.services || {});
-      let best = null;
+      const matches = [];
 
       for (const [group, items] of Object.entries(source)) {
         for (const [title] of items) {
           const score = voiceTermScore(segment, title, group);
+          const span = voiceMatchSpan(segment, title);
 
-          if (score > 0 && (!best || score > best.score)) {
-            best = {
+          if (score >= 45 && span) {
+            matches.push({
               mode,
               group,
               item: title,
-              score
-            };
+              score,
+              span
+            });
           }
         }
       }
 
-      return best;
+      return matches;
+    }
+
+    function removeNestedVoiceMatches(matches) {
+      const sorted = [...matches].sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score;
+        return right.span.length - left.span.length;
+      });
+
+      const selected = [];
+
+      sorted.forEach(match => {
+        const overlapsBetter = selected.some(existing => {
+          const overlaps = !(
+            match.span.end < existing.span.start
+            || match.span.start > existing.span.end
+          );
+
+          if (!overlaps) return false;
+
+          const matchSpecificity = voiceTokenRoots(match.item).length;
+          const existingSpecificity = voiceTokenRoots(existing.item).length;
+
+          return existing.score >= match.score
+            || existingSpecificity >= matchSpecificity;
+        });
+
+        if (!overlapsBetter) {
+          selected.push(match);
+        }
+      });
+
+      return selected.sort((left, right) => left.span.start - right.span.start);
+    }
+
+    function voiceSegmentMatches(segment) {
+      const matches = [
+        ...allVoiceCatalogMatches(segment, "parts"),
+        ...allVoiceCatalogMatches(segment, "service")
+      ];
+
+      return removeNestedVoiceMatches(matches);
     }
 
     function detectVoicePositions(segment, itemName, mode) {
@@ -1980,6 +2054,24 @@
       return [null];
     }
 
+    function voiceContextForMatch(segment, match, matches, index) {
+      const words = normalizeSearch(segment)
+        .split(/\s+/)
+        .filter(Boolean);
+
+      const previous = matches[index - 1];
+      const next = matches[index + 1];
+
+      const start = previous
+        ? Math.min(words.length, previous.span.end + 1)
+        : 0;
+      const end = next
+        ? Math.max(start, next.span.start)
+        : words.length;
+
+      return words.slice(start, end).join(" ");
+    }
+
     function voiceCandidateKey(candidate) {
       return [
         candidate.mode,
@@ -1995,36 +2087,30 @@
       const seen = new Set();
 
       segments.forEach(segment => {
-        const partMatch = bestVoiceCatalogMatch(segment, "parts");
-        const serviceMatch = bestVoiceCatalogMatch(segment, "service");
+        const matches = voiceSegmentMatches(segment);
 
-        const best = [partMatch, serviceMatch]
-          .filter(Boolean)
-          .sort((a, b) => b.score - a.score)[0];
+        matches.forEach((match, matchIndex) => {
+          const context = voiceContextForMatch(segment, match, matches, matchIndex);
+          const positions = detectVoicePositions(context, match.item, match.mode);
 
-        if (!best || best.score < 20) {
-          return;
-        }
+          positions.forEach(position => {
+            const candidate = {
+              mode: match.mode,
+              group: match.group,
+              item: match.item,
+              position,
+              quantity: "",
+              price: "",
+              selected: true
+            };
 
-        const positions = detectVoicePositions(segment, best.item, best.mode);
+            const key = voiceCandidateKey(candidate);
 
-        positions.forEach(position => {
-          const candidate = {
-            mode: best.mode,
-            group: best.group,
-            item: best.item,
-            position,
-            quantity: "",
-            price: "",
-            selected: true
-          };
-
-          const key = voiceCandidateKey(candidate);
-
-          if (!seen.has(key)) {
-            seen.add(key);
-            results.push(candidate);
-          }
+            if (!seen.has(key)) {
+              seen.add(key);
+              results.push(candidate);
+            }
+          });
         });
       });
 
