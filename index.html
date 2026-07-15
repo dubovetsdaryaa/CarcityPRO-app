@@ -421,6 +421,62 @@
       color: #B42318;
     }
 
+    .voice-status {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .voice-status.error {
+      color: #B42318;
+    }
+
+    .voice-status.success {
+      color: var(--green);
+    }
+
+    .voice-candidates {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0 22px;
+    }
+
+    .voice-card {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .voice-card input {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--green);
+    }
+
+    .voice-card strong {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .voice-card span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     .act-header {
       padding: 42px 16px 18px;
       text-align: center;
@@ -806,6 +862,7 @@
     const API_URL = "https://carcitypro-backend.onrender.com";
 
     let data = null;
+    let voiceRecognition = null;
 
     const app = document.getElementById("app");
 
@@ -929,6 +986,8 @@
       selectedPositions: [],
       pendingItems: [],
       deleteSelection: [],
+      voiceTranscript: "",
+      voiceCandidates: [],
       added: [],
       actInfo: {
         sto: loadSavedValue("carcitypro_sto"),
@@ -1703,6 +1762,175 @@
       return results.slice(0, 60);
     }
 
+    function voiceRecognitionSupported() {
+      return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+    }
+
+    function splitVoiceText(text) {
+      return normalizeSearch(text)
+        .replace(/[.!?]/g, ",")
+        .split(/[,;\n]+|(?:\s+потом\s+)|(?:\s+также\s+)|(?:\s+еще\s+)|(?:\s+ещё\s+)/)
+        .map(part => part.trim())
+        .filter(Boolean);
+    }
+
+    function voiceTermScore(segment, title, group) {
+      const normalizedSegment = normalizeSearch(segment);
+      const titleText = normalizeSearch(title);
+      const haystack = searchableText(title, group);
+      const synonyms = synonymTextFor(title, group)
+        .split(/\s{2,}|,|;/)
+        .map(term => normalizeSearch(term))
+        .filter(Boolean);
+
+      let score = 0;
+
+      if (normalizedSegment.includes(titleText)) {
+        score += 120 + titleText.length;
+      }
+
+      synonyms.forEach(term => {
+        if (term && normalizedSegment.includes(term)) {
+          score += 90 + term.length;
+        }
+      });
+
+      const ignored = new Set([
+        "передняя", "передний", "передние", "передняя", "переднюю", "передних",
+        "задняя", "задний", "задние", "заднюю", "задних",
+        "левая", "левый", "левые", "левую", "левых",
+        "правая", "правый", "правые", "правую", "правых",
+        "верхняя", "верхний", "верхние", "нижняя", "нижний", "нижние",
+        "замена", "поменять", "поставить", "нужно", "надо", "и", "на", "по", "шт", "штук", "одна", "один", "две", "два"
+      ]);
+
+      const tokens = normalizedSegment
+        .split(/\s+/)
+        .filter(token => token.length > 2 && !ignored.has(token));
+
+      const matchedTokens = tokens.filter(token => haystack.includes(token));
+
+      if (matchedTokens.length) {
+        score += matchedTokens.length * 12;
+      }
+
+      if (tokens.length && matchedTokens.length === tokens.length) {
+        score += 25;
+      }
+
+      return score;
+    }
+
+    function bestVoiceCatalogMatch(segment, mode) {
+      const source = mode === "parts" ? (data.parts || {}) : (data.services || {});
+      let best = null;
+
+      for (const [group, items] of Object.entries(source)) {
+        for (const [title] of items) {
+          const score = voiceTermScore(segment, title, group);
+
+          if (score > 0 && (!best || score > best.score)) {
+            best = {
+              mode,
+              group,
+              item: title,
+              score
+            };
+          }
+        }
+      }
+
+      return best;
+    }
+
+    function detectVoicePositions(segment, itemName, mode) {
+      const available = mode === "parts"
+        ? (data.positions?.[itemName] || [])
+        : (data.servicePositions?.[itemName] || []);
+
+      if (!available.length) {
+        return [null];
+      }
+
+      const value = normalizeSearch(segment);
+      const hasFront = /перед|передн/.test(value);
+      const hasRear = /зад|задн/.test(value);
+      const hasLeft = /лев|слева/.test(value);
+      const hasRight = /прав|справа/.test(value);
+      const hasUpper = /верх|верхн/.test(value);
+      const hasLower = /ниж|нижн/.test(value);
+
+      const matches = available.filter(position => {
+        const positionText = normalizeSearch(position);
+
+        if (hasFront && !positionText.includes("перед")) return false;
+        if (hasRear && !positionText.includes("зад")) return false;
+        if (hasLeft && !positionText.includes("лев")) return false;
+        if (hasRight && !positionText.includes("прав")) return false;
+        if (hasUpper && !positionText.includes("верх")) return false;
+        if (hasLower && !positionText.includes("ниж")) return false;
+
+        return hasFront || hasRear || hasLeft || hasRight || hasUpper || hasLower;
+      });
+
+      if (matches.length) {
+        return matches;
+      }
+
+      return [null];
+    }
+
+    function voiceCandidateKey(candidate) {
+      return [
+        candidate.mode,
+        candidate.group,
+        candidate.item,
+        candidate.position || ""
+      ].join("|");
+    }
+
+    function findVoiceCandidates(text) {
+      const segments = splitVoiceText(text);
+      const results = [];
+      const seen = new Set();
+
+      segments.forEach(segment => {
+        const partMatch = bestVoiceCatalogMatch(segment, "parts");
+        const serviceMatch = bestVoiceCatalogMatch(segment, "service");
+
+        const best = [partMatch, serviceMatch]
+          .filter(Boolean)
+          .sort((a, b) => b.score - a.score)[0];
+
+        if (!best || best.score < 20) {
+          return;
+        }
+
+        const positions = detectVoicePositions(segment, best.item, best.mode);
+
+        positions.forEach(position => {
+          const candidate = {
+            mode: best.mode,
+            group: best.group,
+            item: best.item,
+            position,
+            quantity: "",
+            price: "",
+            selected: true
+          };
+
+          const key = voiceCandidateKey(candidate);
+
+          if (!seen.has(key)) {
+            seen.add(key);
+            results.push(candidate);
+          }
+        });
+      });
+
+      return results;
+    }
+
     function renderSearchList({ title, placeholder, items, selectedValue, screenClass = "" }) {
       return `
         <section class="screen ${screenClass}">
@@ -1752,13 +1980,17 @@
               </button>
             </div>
 
-            ${hasActItems
-              ? `<div class="actions" style="margin-top:22px;">
-                  <button class="secondary" data-action="open-act">
+            <div class="actions" style="margin-top:22px;">
+              <button class="secondary" data-action="open-voice">
+                🎙 Продиктовать запчасти/услуги
+              </button>
+
+              ${hasActItems
+                ? `<button class="secondary" data-action="open-act">
                     Перейти к акту дефектовки (${state.added.length})
-                  </button>
-                </div>`
-              : ""}
+                  </button>`
+                : ""}
+            </div>
           </div>
           ${cancelBar()}
         </section>
@@ -1943,6 +2175,90 @@
               <button class="secondary" data-action="open-act">Перейти к акту дефектовки</button>
             </div>
           </div>
+          ${cancelBar()}
+        </section>
+      `;
+    }
+
+    function renderVoice() {
+      setAccent(BLUE);
+      const supported = voiceRecognitionSupported();
+      const candidates = state.voiceCandidates || [];
+      const selectedCount = candidates.filter(candidate => candidate.selected).length;
+
+      return `
+        <section class="screen">
+          ${topbar("Голосовой ввод")}
+
+          <div class="content success-content">
+            <h1 class="success-title" style="margin-bottom:14px;">
+              Продиктуйте запчасти и услуги
+            </h1>
+
+            <p class="intro-subtitle" style="margin-bottom:18px;">
+              Например: передняя правая стойка стабилизатора, задняя левая стойка амортизатора.
+            </p>
+
+            ${supported
+              ? `<button class="primary" data-action="start-voice">🎙 Начать запись</button>`
+              : `<div class="pdf-status error">На этом устройстве браузер не поддерживает распознавание речи. Можно вставить текст вручную ниже.</div>`
+            }
+
+            <div class="act-form" style="padding:18px 0 10px;">
+              <label class="field">
+                <span class="field-label">Распознанный текст</span>
+                <textarea
+                  class="field-input field-textarea"
+                  id="voiceTranscriptInput"
+                  maxlength="3000"
+                  placeholder="Можно продиктовать или ввести текст вручную"
+                >${escapeAttr(state.voiceTranscript || "")}</textarea>
+              </label>
+            </div>
+
+            <div class="actions">
+              <button class="secondary" data-action="find-voice-matches">
+                Найти позиции
+              </button>
+            </div>
+
+            <div class="voice-status" id="voiceStatus"></div>
+
+            ${candidates.length
+              ? `<div class="voice-candidates">
+                  ${candidates.map((candidate, index) => `
+                    <label class="voice-card">
+                      <input
+                        type="checkbox"
+                        data-action="toggle-voice-candidate"
+                        data-index="${index}"
+                        ${candidate.selected ? "checked" : ""}
+                      >
+                      <span>
+                        <strong>${escapeAttr(candidate.position || candidate.item)}</strong>
+                        <span>
+                          ${candidate.mode === "parts" ? "Автозапчасть" : "Услуга СТО"}
+                          → ${escapeAttr(candidate.group)}
+                          → ${escapeAttr(candidate.item)}
+                        </span>
+                      </span>
+                    </label>
+                  `).join("")}
+                </div>
+
+                <div class="actions">
+                  <button
+                    class="primary"
+                    data-action="add-voice-candidates"
+                    ${selectedCount ? "" : "disabled"}
+                  >
+                    Добавить выбранные (${selectedCount})
+                  </button>
+                </div>`
+              : ""
+            }
+          </div>
+
           ${cancelBar()}
         </section>
       `;
@@ -2148,6 +2464,10 @@
 
           <div class="content" style="padding-top:0">
             <div class="actions">
+              <button class="secondary" data-action="open-voice">
+                🎙 Продиктовать запчасти/услуги
+              </button>
+
               <button
                 class="primary"
                 data-action="generate-pdf"
@@ -2182,6 +2502,7 @@
         servicePosition: renderServicePosition,
         itemDetails: renderItemDetails,
         success: renderSuccess,
+        voice: renderVoice,
         act: renderAct
       };
 
@@ -2736,6 +3057,150 @@
           state.deleteSelection = [];
           haptic("medium");
           render();
+        });
+      });
+
+      document.querySelectorAll('[data-action="open-voice"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          state.history.push(state.screen);
+          state.screen = "voice";
+          render();
+          window.scrollTo(0, 0);
+        });
+      });
+
+      document.querySelectorAll('[data-action="start-voice"]').forEach(el => {
+        el.addEventListener("click", () => {
+          const status = document.getElementById("voiceStatus");
+          const input = document.getElementById("voiceTranscriptInput");
+          const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+          if (!Recognition) {
+            if (status) {
+              status.className = "voice-status error";
+              status.textContent = "Распознавание речи недоступно на этом устройстве.";
+            }
+            return;
+          }
+
+          try {
+            voiceRecognition?.stop?.();
+          } catch (_) {}
+
+          voiceRecognition = new Recognition();
+          voiceRecognition.lang = "ru-RU";
+          voiceRecognition.continuous = true;
+          voiceRecognition.interimResults = true;
+
+          let finalText = state.voiceTranscript || "";
+
+          voiceRecognition.onstart = () => {
+            if (status) {
+              status.className = "voice-status success";
+              status.textContent = "Слушаю… Говорите запчасти и услуги.";
+            }
+            el.textContent = "🎙 Идёт запись…";
+            el.disabled = true;
+          };
+
+          voiceRecognition.onresult = event => {
+            let interimText = "";
+
+            for (let index = event.resultIndex; index < event.results.length; index += 1) {
+              const text = event.results[index][0].transcript;
+
+              if (event.results[index].isFinal) {
+                finalText = `${finalText} ${text}`.trim();
+              } else {
+                interimText += text;
+              }
+            }
+
+            const fullText = `${finalText} ${interimText}`.trim();
+            state.voiceTranscript = fullText;
+
+            if (input) input.value = fullText;
+          };
+
+          voiceRecognition.onerror = event => {
+            if (status) {
+              status.className = "voice-status error";
+              status.textContent = `Ошибка распознавания: ${event.error || "неизвестно"}`;
+            }
+          };
+
+          voiceRecognition.onend = () => {
+            el.textContent = "🎙 Начать запись";
+            el.disabled = false;
+
+            if (status && state.voiceTranscript) {
+              status.className = "voice-status";
+              status.textContent = "Запись завершена. Нажмите «Найти позиции».";
+            }
+          };
+
+          haptic();
+          voiceRecognition.start();
+        });
+      });
+
+      document.querySelectorAll('[data-action="find-voice-matches"]').forEach(el => {
+        el.addEventListener("click", () => {
+          const input = document.getElementById("voiceTranscriptInput");
+          const status = document.getElementById("voiceStatus");
+
+          state.voiceTranscript = input?.value || "";
+          state.voiceCandidates = findVoiceCandidates(state.voiceTranscript);
+
+          haptic();
+          render();
+
+          if (!state.voiceCandidates.length && status) {
+            status.className = "voice-status error";
+            status.textContent = "Позиции не найдены. Попробуйте сказать проще или используйте поиск вручную.";
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-action="toggle-voice-candidate"]').forEach(el => {
+        el.addEventListener("change", () => {
+          const index = Number(el.dataset.index);
+
+          if (Number.isInteger(index) && state.voiceCandidates[index]) {
+            state.voiceCandidates[index].selected = el.checked;
+            render();
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-action="add-voice-candidates"]').forEach(el => {
+        el.addEventListener("click", () => {
+          const candidates = (state.voiceCandidates || [])
+            .filter(candidate => candidate.selected)
+            .map(candidate => ({
+              mode: candidate.mode,
+              group: candidate.group,
+              item: candidate.item,
+              position: candidate.position || null,
+              quantity: "",
+              price: ""
+            }));
+
+          candidates.forEach(candidate => {
+            if (!itemAlreadyAdded(candidate)) {
+              state.added.push(candidate);
+            }
+          });
+
+          state.voiceCandidates = [];
+          state.voiceTranscript = "";
+
+          haptic();
+          state.screen = "act";
+          state.history = [];
+          render();
+          window.scrollTo(0, 0);
         });
       });
 
