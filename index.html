@@ -421,6 +421,62 @@
       color: #B42318;
     }
 
+    .voice-status {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .voice-status.error {
+      color: #B42318;
+    }
+
+    .voice-status.success {
+      color: var(--green);
+    }
+
+    .voice-candidates {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0 22px;
+    }
+
+    .voice-card {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .voice-card input {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--green);
+    }
+
+    .voice-card strong {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .voice-card span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     .act-header {
       padding: 42px 16px 18px;
       text-align: center;
@@ -806,6 +862,9 @@
     const API_URL = "https://carcitypro-backend.onrender.com";
 
     let data = null;
+    let voiceMediaRecorder = null;
+    let voiceAudioChunks = [];
+    let voiceMediaStream = null;
 
     const app = document.getElementById("app");
 
@@ -929,6 +988,10 @@
       selectedPositions: [],
       pendingItems: [],
       deleteSelection: [],
+      voiceTranscript: "",
+      voiceCandidates: [],
+      voiceStatusText: "",
+      voiceStatusKind: "",
       added: [],
       actInfo: {
         sto: loadSavedValue("carcitypro_sto"),
@@ -1703,6 +1766,423 @@
       return results.slice(0, 60);
     }
 
+    function voiceRecordingSupported() {
+      return Boolean(
+        navigator.mediaDevices
+        && navigator.mediaDevices.getUserMedia
+        && window.MediaRecorder
+      );
+    }
+
+    function compactRepeatedVoiceWords(text) {
+      let words = String(text || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(" ")
+        .filter(Boolean);
+
+      if (!words.length) return "";
+
+      for (let size = 5; size >= 1; size -= 1) {
+        let changed = true;
+
+        while (changed) {
+          changed = false;
+          const compacted = [];
+
+          for (let index = 0; index < words.length;) {
+            const current = words
+              .slice(index, index + size)
+              .map(word => normalizeSearch(word))
+              .join(" ");
+            const next = words
+              .slice(index + size, index + size * 2)
+              .map(word => normalizeSearch(word))
+              .join(" ");
+
+            if (
+              current
+              && next
+              && current === next
+              && words.slice(index + size, index + size * 2).length === size
+            ) {
+              compacted.push(...words.slice(index, index + size));
+              index += size * 2;
+              changed = true;
+            } else {
+              compacted.push(words[index]);
+              index += 1;
+            }
+          }
+
+          words = compacted;
+        }
+      }
+
+      return words.join(" ").trim();
+    }
+
+    function cleanVoiceTranscript(text) {
+      return String(text || "")
+        .split(/[,;\n]+/)
+        .map(part => compactRepeatedVoiceWords(part))
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    function voiceTokenRoot(token) {
+      let value = normalizeSearch(token).replace(/[^a-zа-я0-9]+/gi, "");
+
+      if (value.length <= 4) return value;
+
+      const endings = [
+        "ыми", "ими", "ого", "его", "ому", "ему", "ыми", "ими",
+        "ая", "яя", "ое", "ее", "ые", "ие", "ый", "ий", "ой",
+        "ую", "юю", "ых", "их", "ам", "ям", "ах", "ях", "ом",
+        "ем", "ов", "ев", "а", "я", "ы", "и", "у", "ю", "е"
+      ];
+
+      for (const ending of endings) {
+        if (value.endsWith(ending) && value.length - ending.length >= 4) {
+          return value.slice(0, -ending.length);
+        }
+      }
+
+      return value;
+    }
+
+    function voiceTokenRoots(text) {
+      return normalizeSearch(text)
+        .split(/\s+/)
+        .map(voiceTokenRoot)
+        .filter(token => token.length > 2);
+    }
+
+    function splitVoiceText(text) {
+      return cleanVoiceTranscript(text)
+        .toLocaleLowerCase("ru")
+        .replaceAll("ё", "е")
+        .replace(/[.!?]/g, ",")
+        .split(/[,;\n]+|(?:\s+потом\s+)|(?:\s+также\s+)|(?:\s+еще\s+)|(?:\s+ещё\s+)/)
+        .map(part => part.trim())
+        .filter(Boolean);
+    }
+
+    function voiceTermScore(segment, title, group) {
+      const normalizedSegment = normalizeSearch(segment);
+      const titleText = normalizeSearch(title);
+      const haystack = searchableText(title, group);
+      const synonyms = synonymTextFor(title, group)
+        .split(/\s{2,}|,|;/)
+        .map(term => normalizeSearch(term))
+        .filter(Boolean);
+
+      const ignoredRoots = new Set([
+        "передн", "перед", "задн", "зад", "лев", "прав",
+        "верхн", "верх", "нижн", "ниж", "слева", "справа",
+        "замен", "помен", "постав", "нужн", "над", "одн",
+        "дв", "три", "четыр", "пять", "штук", "шт"
+      ]);
+
+      const segmentRoots = [...new Set(voiceTokenRoots(segment))]
+        .filter(token => !ignoredRoots.has(token));
+      const titleRoots = [...new Set(voiceTokenRoots(title))]
+        .filter(token => !ignoredRoots.has(token));
+      const haystackRoots = new Set(
+        voiceTokenRoots(haystack).filter(token => !ignoredRoots.has(token))
+      );
+
+      if (!segmentRoots.length) {
+        return 0;
+      }
+
+      let score = 0;
+
+      if (titleText.length > 3 && normalizedSegment.includes(titleText)) {
+        score += 140 + titleText.length;
+      }
+
+      synonyms.forEach(term => {
+        if (term.length > 3 && normalizedSegment.includes(term)) {
+          score += 100 + term.length;
+        }
+      });
+
+      const titleMatches = titleRoots.filter(token => segmentRoots.includes(token));
+      const haystackMatches = segmentRoots.filter(token => haystackRoots.has(token));
+
+      score += titleMatches.length * 45;
+      score += haystackMatches.length * 12;
+
+      if (titleRoots.length && titleMatches.length === titleRoots.length) {
+        score += 120;
+      }
+
+      if (titleRoots.length >= 2 && titleMatches.length >= 2) {
+        score += 90;
+      }
+
+      if (titleRoots.length >= 2 && titleMatches.length === 1) {
+        score += 15;
+      }
+
+      return score;
+    }
+
+    function voiceMatchSpan(segment, title) {
+      const segmentRoots = voiceTokenRoots(segment);
+      const titleRoots = [...new Set(voiceTokenRoots(title))];
+
+      if (!segmentRoots.length || !titleRoots.length) {
+        return null;
+      }
+
+      let bestPositions = null;
+      let bestWidth = Infinity;
+
+      for (let startIndex = 0; startIndex < segmentRoots.length; startIndex += 1) {
+        let cursor = startIndex;
+        const positions = [];
+        let ok = true;
+
+        for (const root of titleRoots) {
+          let foundIndex = -1;
+
+          for (let index = cursor; index < segmentRoots.length; index += 1) {
+            const token = segmentRoots[index];
+
+            if (
+              token === root
+              || token.includes(root)
+              || root.includes(token)
+            ) {
+              foundIndex = index;
+              break;
+            }
+          }
+
+          if (foundIndex < 0) {
+            ok = false;
+            break;
+          }
+
+          positions.push(foundIndex);
+          cursor = foundIndex + 1;
+        }
+
+        if (!ok) continue;
+
+        const width = positions[positions.length - 1] - positions[0];
+
+        if (width < bestWidth) {
+          bestWidth = width;
+          bestPositions = positions;
+        }
+      }
+
+      if (!bestPositions) {
+        return null;
+      }
+
+      return {
+        start: bestPositions[0],
+        end: bestPositions[bestPositions.length - 1],
+        length: titleRoots.length
+      };
+    }
+
+    function allVoiceCatalogMatches(segment, mode) {
+      const source = mode === "parts" ? (data.parts || {}) : (data.services || {});
+      const matches = [];
+
+      for (const [group, items] of Object.entries(source)) {
+        for (const [title] of items) {
+          const score = voiceTermScore(segment, title, group);
+          const span = voiceMatchSpan(segment, title);
+
+          if (score >= 45 && span) {
+            matches.push({
+              mode,
+              group,
+              item: title,
+              score,
+              span
+            });
+          }
+        }
+      }
+
+      return matches;
+    }
+
+    function removeNestedVoiceMatches(matches) {
+      const sorted = [...matches].sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score;
+        return right.span.length - left.span.length;
+      });
+
+      const selected = [];
+
+      sorted.forEach(match => {
+        const overlapsBetter = selected.some(existing => {
+          const overlaps = !(
+            match.span.end < existing.span.start
+            || match.span.start > existing.span.end
+          );
+
+          if (!overlaps) return false;
+
+          const matchSpecificity = voiceTokenRoots(match.item).length;
+          const existingSpecificity = voiceTokenRoots(existing.item).length;
+
+          return existing.score >= match.score
+            || existingSpecificity >= matchSpecificity;
+        });
+
+        if (!overlapsBetter) {
+          selected.push(match);
+        }
+      });
+
+      return selected.sort((left, right) => left.span.start - right.span.start);
+    }
+
+    function voiceSegmentMatches(segment) {
+      const matches = [
+        ...allVoiceCatalogMatches(segment, "parts"),
+        ...allVoiceCatalogMatches(segment, "service")
+      ];
+
+      return removeNestedVoiceMatches(matches);
+    }
+
+    function voicePositionFlags(text) {
+      const value = normalizeSearch(text);
+
+      return {
+        hasFront: /перед|передн/.test(value),
+        hasRear: /зад|задн/.test(value),
+        hasLeft: /лев|слева/.test(value),
+        hasRight: /прав|справа/.test(value),
+        hasUpper: /верх|верхн/.test(value),
+        hasLower: /ниж|нижн/.test(value)
+      };
+    }
+
+    function hasAnyVoicePositionFlag(flags) {
+      return Boolean(
+        flags.hasFront
+        || flags.hasRear
+        || flags.hasLeft
+        || flags.hasRight
+        || flags.hasUpper
+        || flags.hasLower
+      );
+    }
+
+    function detectVoicePositionsForMatch(segment, itemName, mode, match, matches, matchIndex) {
+      const available = mode === "parts"
+        ? (data.positions?.[itemName] || [])
+        : (data.servicePositions?.[itemName] || []);
+
+      if (!available.length) {
+        return [null];
+      }
+
+      const words = normalizeSearch(segment)
+        .split(/\s+/)
+        .filter(Boolean);
+
+      const previous = matches[matchIndex - 1];
+      const next = matches[matchIndex + 1];
+
+      const beforeStart = previous ? previous.span.end + 1 : 0;
+      const beforeText = words
+        .slice(beforeStart, match.span.start)
+        .join(" ");
+
+      const afterEnd = next ? next.span.start : words.length;
+      const afterText = words
+        .slice(match.span.end + 1, afterEnd)
+        .join(" ");
+
+      let flags = voicePositionFlags(beforeText);
+
+      if (!hasAnyVoicePositionFlag(flags)) {
+        flags = voicePositionFlags(afterText);
+      }
+
+      const matchesByPosition = available.filter(position => {
+        const positionText = normalizeSearch(position);
+
+        if (flags.hasFront && !positionText.includes("перед")) return false;
+        if (flags.hasRear && !positionText.includes("зад")) return false;
+        if (flags.hasLeft && !positionText.includes("лев")) return false;
+        if (flags.hasRight && !positionText.includes("прав")) return false;
+        if (flags.hasUpper && !positionText.includes("верх")) return false;
+        if (flags.hasLower && !positionText.includes("ниж")) return false;
+
+        return hasAnyVoicePositionFlag(flags);
+      });
+
+      if (matchesByPosition.length) {
+        return matchesByPosition;
+      }
+
+      return [null];
+    }
+
+    function voiceCandidateKey(candidate) {
+      return [
+        candidate.mode,
+        candidate.group,
+        candidate.item,
+        candidate.position || ""
+      ].join("|");
+    }
+
+    function findVoiceCandidates(text) {
+      const segments = splitVoiceText(text);
+      const results = [];
+      const seen = new Set();
+
+      segments.forEach(segment => {
+        const matches = voiceSegmentMatches(segment);
+
+        matches.forEach((match, matchIndex) => {
+          const positions = detectVoicePositionsForMatch(
+            segment,
+            match.item,
+            match.mode,
+            match,
+            matches,
+            matchIndex
+          );
+
+          positions.forEach(position => {
+            const candidate = {
+              mode: match.mode,
+              group: match.group,
+              item: match.item,
+              position,
+              quantity: "",
+              price: "",
+              selected: true
+            };
+
+            const key = voiceCandidateKey(candidate);
+
+            if (!seen.has(key)) {
+              seen.add(key);
+              results.push(candidate);
+            }
+          });
+        });
+      });
+
+      return results;
+    }
+
     function renderSearchList({ title, placeholder, items, selectedValue, screenClass = "" }) {
       return `
         <section class="screen ${screenClass}">
@@ -1752,13 +2232,17 @@
               </button>
             </div>
 
-            ${hasActItems
-              ? `<div class="actions" style="margin-top:22px;">
-                  <button class="secondary" data-action="open-act">
+            <div class="actions" style="margin-top:22px;">
+              <button class="secondary" data-action="open-voice">
+                🎙 Продиктовать запчасти/услуги
+              </button>
+
+              ${hasActItems
+                ? `<button class="secondary" data-action="open-act">
                     Перейти к акту дефектовки (${state.added.length})
-                  </button>
-                </div>`
-              : ""}
+                  </button>`
+                : ""}
+            </div>
           </div>
           ${cancelBar()}
         </section>
@@ -1943,6 +2427,91 @@
               <button class="secondary" data-action="open-act">Перейти к акту дефектовки</button>
             </div>
           </div>
+          ${cancelBar()}
+        </section>
+      `;
+    }
+
+    function renderVoice() {
+      setAccent(BLUE);
+      const supported = voiceRecordingSupported();
+      const candidates = state.voiceCandidates || [];
+      const selectedCount = candidates.filter(candidate => candidate.selected).length;
+
+      return `
+        <section class="screen">
+          ${topbar("Голосовой ввод")}
+
+          <div class="content success-content">
+            <h1 class="success-title" style="margin-bottom:14px;">
+              Продиктуйте запчасти и услуги
+            </h1>
+
+            <p class="intro-subtitle" style="margin-bottom:18px;">
+              Например: передняя правая стойка стабилизатора, пауза, задняя левая стойка амортизатора.
+              Пауза будет считаться разделителем между позициями.
+            </p>
+
+            ${supported
+              ? `<button class="primary" data-action="start-voice">🎙 Начать запись</button>`
+              : `<div class="pdf-status error">На этом устройстве браузер не поддерживает запись аудио. Можно вставить текст вручную ниже.</div>`
+            }
+
+            <div class="act-form" style="padding:18px 0 10px;">
+              <label class="field">
+                <span class="field-label">Распознанный текст</span>
+                <textarea
+                  class="field-input field-textarea"
+                  id="voiceTranscriptInput"
+                  maxlength="3000"
+                  placeholder="Можно продиктовать или ввести текст вручную"
+                >${escapeAttr(state.voiceTranscript || "")}</textarea>
+              </label>
+            </div>
+
+            <div class="actions">
+              <button class="secondary" data-action="find-voice-matches">
+                Найти позиции
+              </button>
+            </div>
+
+            <div class="voice-status ${state.voiceStatusKind || ""}" id="voiceStatus">${escapeAttr(state.voiceStatusText || "")}</div>
+
+            ${candidates.length
+              ? `<div class="voice-candidates">
+                  ${candidates.map((candidate, index) => `
+                    <label class="voice-card">
+                      <input
+                        type="checkbox"
+                        data-action="toggle-voice-candidate"
+                        data-index="${index}"
+                        ${candidate.selected ? "checked" : ""}
+                      >
+                      <span>
+                        <strong>${escapeAttr(candidate.position || candidate.item)}</strong>
+                        <span>
+                          ${candidate.mode === "parts" ? "Автозапчасть" : "Услуга СТО"}
+                          → ${escapeAttr(candidate.group)}
+                          → ${escapeAttr(candidate.item)}
+                        </span>
+                      </span>
+                    </label>
+                  `).join("")}
+                </div>
+
+                <div class="actions">
+                  <button
+                    class="primary"
+                    data-action="add-voice-candidates"
+                    ${selectedCount ? "" : "disabled"}
+                  >
+                    Добавить выбранные (${selectedCount})
+                  </button>
+                </div>`
+              : ""
+            }
+          </div>
+
           ${cancelBar()}
         </section>
       `;
@@ -2148,6 +2717,10 @@
 
           <div class="content" style="padding-top:0">
             <div class="actions">
+              <button class="secondary" data-action="open-voice">
+                🎙 Продиктовать запчасти/услуги
+              </button>
+
               <button
                 class="primary"
                 data-action="generate-pdf"
@@ -2182,6 +2755,7 @@
         servicePosition: renderServicePosition,
         itemDetails: renderItemDetails,
         success: renderSuccess,
+        voice: renderVoice,
         act: renderAct
       };
 
@@ -2736,6 +3310,235 @@
           state.deleteSelection = [];
           haptic("medium");
           render();
+        });
+      });
+
+      document.querySelectorAll('[data-action="open-voice"]').forEach(el => {
+        el.addEventListener("click", () => {
+          haptic();
+          state.history.push(state.screen);
+          state.screen = "voice";
+          render();
+          window.scrollTo(0, 0);
+        });
+      });
+
+      async function stopVoiceTracks() {
+        try {
+          voiceMediaStream?.getTracks?.().forEach(track => track.stop());
+        } catch (_) {}
+
+        voiceMediaStream = null;
+      }
+
+      function preferredVoiceMimeType() {
+        const types = [
+          "audio/webm;codecs=opus",
+          "audio/webm",
+          "audio/mp4",
+          "audio/mpeg"
+        ];
+
+        return types.find(type => MediaRecorder.isTypeSupported?.(type)) || "";
+      }
+
+      async function transcribeVoiceBlob(blob) {
+        const response = await fetch(`${API_URL}/api/voice-transcribe`, {
+          method: "POST",
+          headers: {
+            "Content-Type": blob.type || "application/octet-stream",
+            "X-Telegram-Init-Data": tg?.initData || ""
+          },
+          body: blob
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || !result.ok) {
+          throw new Error(result.detail || result.error || "Не удалось распознать голос.");
+        }
+
+        return cleanVoiceTranscript(result.text || "");
+      }
+
+      document.querySelectorAll('[data-action="start-voice"]').forEach(el => {
+        el.addEventListener("click", async () => {
+          const status = document.getElementById("voiceStatus");
+          const input = document.getElementById("voiceTranscriptInput");
+
+          if (voiceMediaRecorder && voiceMediaRecorder.state === "recording") {
+            haptic();
+            voiceMediaRecorder.stop();
+            el.disabled = true;
+            el.textContent = "⏳ Распознаём…";
+
+            if (status) {
+              status.className = "voice-status";
+              status.textContent = "Отправляю аудио на распознавание…";
+            }
+
+            return;
+          }
+
+          if (!voiceRecordingSupported()) {
+            if (status) {
+              status.className = "voice-status error";
+              status.textContent = "Запись аудио недоступна на этом устройстве.";
+            }
+
+            return;
+          }
+
+          try {
+            voiceAudioChunks = [];
+            voiceMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            const mimeType = preferredVoiceMimeType();
+            voiceMediaRecorder = new MediaRecorder(
+              voiceMediaStream,
+              mimeType ? { mimeType } : undefined
+            );
+
+            voiceMediaRecorder.ondataavailable = event => {
+              if (event.data && event.data.size > 0) {
+                voiceAudioChunks.push(event.data);
+              }
+            };
+
+            voiceMediaRecorder.onstart = () => {
+              state.voiceStatusText = "Слушаю… Нажмите кнопку ещё раз, чтобы остановить запись.";
+              state.voiceStatusKind = "success";
+
+              if (status) {
+                status.className = "voice-status success";
+                status.textContent = state.voiceStatusText;
+              }
+
+              el.textContent = "⏹ Остановить запись";
+              el.disabled = false;
+            };
+
+            voiceMediaRecorder.onstop = async () => {
+              const audioBlob = new Blob(voiceAudioChunks, {
+                type: voiceMediaRecorder?.mimeType || "audio/webm"
+              });
+
+              await stopVoiceTracks();
+
+              if (!audioBlob.size) {
+                state.voiceStatusText = "Аудио не записалось. Попробуйте ещё раз.";
+                state.voiceStatusKind = "error";
+                el.textContent = "🎙 Начать запись";
+                el.disabled = false;
+                render();
+                return;
+              }
+
+              try {
+                state.voiceStatusText = "Распознаю голос через Hugging Face…";
+                state.voiceStatusKind = "";
+
+                if (status) {
+                  status.className = "voice-status";
+                  status.textContent = state.voiceStatusText;
+                }
+
+                const transcript = await transcribeVoiceBlob(audioBlob);
+
+                state.voiceTranscript = transcript;
+                state.voiceCandidates = findVoiceCandidates(transcript);
+                state.voiceStatusText = state.voiceCandidates.length
+                  ? "Готово. Проверьте найденные позиции."
+                  : "Текст распознан, но позиции не найдены. Можно поправить текст вручную.";
+                state.voiceStatusKind = state.voiceCandidates.length ? "success" : "error";
+
+                if (input) input.value = transcript;
+              } catch (error) {
+                state.voiceStatusText = error.message || "Не удалось распознать голос.";
+                state.voiceStatusKind = "error";
+              } finally {
+                voiceMediaRecorder = null;
+                voiceAudioChunks = [];
+                el.textContent = "🎙 Начать запись";
+                el.disabled = false;
+                render();
+              }
+            };
+
+            haptic();
+            voiceMediaRecorder.start();
+          } catch (error) {
+            await stopVoiceTracks();
+
+            if (status) {
+              status.className = "voice-status error";
+              status.textContent = error.message || "Не удалось получить доступ к микрофону.";
+            }
+
+            el.textContent = "🎙 Начать запись";
+            el.disabled = false;
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-action="find-voice-matches"]').forEach(el => {
+        el.addEventListener("click", () => {
+          const input = document.getElementById("voiceTranscriptInput");
+          const status = document.getElementById("voiceStatus");
+
+          state.voiceTranscript = cleanVoiceTranscript(input?.value || "");
+          if (input) input.value = state.voiceTranscript;
+          state.voiceCandidates = findVoiceCandidates(state.voiceTranscript);
+          state.voiceStatusText = state.voiceCandidates.length
+            ? "Готово. Проверьте найденные позиции."
+            : "Позиции не найдены. Попробуйте сказать проще или поправьте текст вручную.";
+          state.voiceStatusKind = state.voiceCandidates.length ? "success" : "error";
+
+          haptic();
+          render();
+        });
+      });
+
+      document.querySelectorAll('[data-action="toggle-voice-candidate"]').forEach(el => {
+        el.addEventListener("change", () => {
+          const index = Number(el.dataset.index);
+
+          if (Number.isInteger(index) && state.voiceCandidates[index]) {
+            state.voiceCandidates[index].selected = el.checked;
+            render();
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-action="add-voice-candidates"]').forEach(el => {
+        el.addEventListener("click", () => {
+          const candidates = (state.voiceCandidates || [])
+            .filter(candidate => candidate.selected)
+            .map(candidate => ({
+              mode: candidate.mode,
+              group: candidate.group,
+              item: candidate.item,
+              position: candidate.position || null,
+              quantity: "",
+              price: ""
+            }));
+
+          candidates.forEach(candidate => {
+            if (!itemAlreadyAdded(candidate)) {
+              state.added.push(candidate);
+            }
+          });
+
+          state.voiceCandidates = [];
+          state.voiceTranscript = "";
+          state.voiceStatusText = "";
+          state.voiceStatusKind = "";
+
+          haptic();
+          state.screen = "act";
+          state.history = [];
+          render();
+          window.scrollTo(0, 0);
         });
       });
 
