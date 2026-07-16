@@ -3343,13 +3343,15 @@
       }
 
       async function transcribeVoiceBlob(blob) {
+        const formData = new FormData();
+
+        formData.append("audio", blob, "voice.webm");
+        formData.append("init_data", tg?.initData || "");
+        formData.append("content_type", blob.type || "audio/webm");
+
         const response = await fetch(`${API_URL}/api/voice-transcribe`, {
           method: "POST",
-          headers: {
-            "Content-Type": blob.type || "application/octet-stream",
-            "X-Telegram-Init-Data": tg?.initData || ""
-          },
-          body: blob
+          body: formData
         });
 
         const result = await response.json().catch(() => ({}));
