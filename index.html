@@ -3342,16 +3342,33 @@
         return types.find(type => MediaRecorder.isTypeSupported?.(type)) || "";
       }
 
-      async function transcribeVoiceBlob(blob) {
-        const formData = new FormData();
+      function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
 
-        formData.append("audio", blob, "voice.webm");
-        formData.append("init_data", tg?.initData || "");
-        formData.append("content_type", blob.type || "audio/webm");
+          reader.onloadend = () => {
+            const result = String(reader.result || "");
+            resolve(result.includes(",") ? result.split(",").pop() : result);
+          };
+
+          reader.onerror = () => reject(new Error("Не удалось прочитать аудио."));
+          reader.readAsDataURL(blob);
+        });
+      }
+
+      async function transcribeVoiceBlob(blob) {
+        const audioBase64 = await blobToBase64(blob);
 
         const response = await fetch(`${API_URL}/api/voice-transcribe`, {
           method: "POST",
-          body: formData
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            init_data: tg?.initData || "",
+            content_type: blob.type || "audio/webm",
+            audio_base64: audioBase64
+          })
         });
 
         const result = await response.json().catch(() => ({}));
