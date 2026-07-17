@@ -146,7 +146,7 @@
   </main>
 
   <script>
-    const TARGET_URL = "https://carcitypro-backend.onrender.com/app/?v=voice-clarify-strict-v1";
+    const TARGET_URL = "https://carcitypro-backend.onrender.com/app/?v=voice-clarify-strict-v2";
     const HEALTH_URL = "https://carcitypro-backend.onrender.com/health";
     const statusText = document.getElementById("statusText");
     const openButton = document.getElementById("openButton");
@@ -157,7 +157,12 @@
     } catch (_) {}
 
     function openApp() {
-      window.location.replace(TARGET_URL);
+      const initData = window.Telegram?.WebApp?.initData || "";
+      const hash = initData
+        ? `#tginit=${encodeURIComponent(initData)}`
+        : "";
+
+      window.location.replace(`${TARGET_URL}${hash}`);
     }
 
     openButton.addEventListener("click", openApp);
